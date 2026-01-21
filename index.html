@@ -477,7 +477,7 @@
                         </label>
 
                         <label>
-                            Yearly withdrawal amount (net spending target)
+                            Yearly spending target (Net)
                             <input type="number" id="withdrawal" min="0" step="500" value="36000" />
                         </label>
 
@@ -1478,8 +1478,8 @@
                         isaTotal: isaTotalNow,
                         stateIncome,
                         netSpendTarget: targetThisYear,   // keeping the existing column name; value is gross target
-                        takenIsa,
                         takenPensionGross,
+                        takenIsa,
                         taxPaid,
                         netDelivered,
                         pclsUsedThisYear,
@@ -1505,8 +1505,8 @@
                         isaTotal: isaTotalNow,
                         stateIncome,
                         netSpendTarget: 0,
-                        takenIsa: 0,
                         takenPensionGross: 0,
+                        takenIsa: 0,
                         taxPaid: 0,
                         netDelivered: 0,
                         pclsUsedThisYear: 0,
@@ -1572,8 +1572,8 @@
               <td class="right">${money0(r.isaTotal)}</td>
               <td class="right">${money0(r.stateIncome)}</td>
               <td class="right">${money0(r.netSpendTarget)}</td>
-              <td class="right">${money0(r.takenIsa)}</td>
               <td class="right">${money0(r.takenPensionGross)}</td>
+              <td class="right">${money0(r.takenIsa)}</td>
               <td class="right">${money0(r.taxPaid)}</td>
               <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
               <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
@@ -1612,8 +1612,8 @@
                     Math.round(r.isaTotal),
                     Math.round(r.stateIncome),
                     Math.round(r.netSpendTarget),
-                    Math.round(r.takenIsa),
                     Math.round(r.takenPensionGross),
+                    Math.round(r.takenIsa),
                     Math.round(r.taxPaid),
                     Math.round(r.netDelivered),
                     Math.round(r.pclsUsedThisYear || 0),
