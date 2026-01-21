@@ -228,10 +228,9 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            overflow: hidden;
             border-radius: 12px;
             border: 1px solid var(--border);
-            background: color-mix(in srgb, var(--panel2) 50%, transparent);
+            background: var(--panel2);
         }
 
         th, td {
@@ -311,12 +310,40 @@
                 color: var(--muted);
             }
 
+        /* Make the wrapper actually scroll */
         .scroll {
-            overflow: auto;
-            max-height: 72vh;
-            border-radius: 14px;
+            max-height: 60vh;
+            overflow: auto; /* both x and y */
+            position: relative;
             border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel) !important; /* or var(--panel) if you prefer */
         }
+
+
+
+            /* Sticky header */
+            .scroll thead th {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--panel2); /* <-- ADD THIS (or var(--panel)) */
+                box-shadow: 0 1px 0 var(--border);
+                border-bottom: 2px solid var(--border);
+            }
+
+            /* Zebra striping for readability */
+            .scroll tbody tr:nth-child(odd) td {
+                background: color-mix(in srgb, var(--panel2) 50%, transparent);
+            }
+
+            .scroll tbody tr:nth-child(even) td {
+                background: color-mix(in srgb, var(--panel2) 65%, transparent);
+            }
+
+
+
+
 
         .note {
             font-size: 12px;
@@ -335,6 +362,39 @@
             line-height: 1.4;
             margin-top: 10px;
         }
+
+        /* Stronger zebra striping using accent tint */
+        #resultTable tbody tr:nth-child(odd) td {
+            background: color-mix(in srgb, var(--panel2) 92%, var(--accent) 8%) !important;
+        }
+
+        #resultTable tbody tr:nth-child(even) td {
+            background: color-mix(in srgb, var(--panel2) 78%, var(--accent) 15%) !important;
+        }
+
+        #resultTable tbody tr:hover td {
+            background: color-mix(in srgb, var(--panel2) 78%, var(--accent) 30%) !important;
+            transition: background 0.08s ease;
+        }
+
+        /* Net delivered pill */
+        #resultTable .net-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 900;
+            color: var(--text);
+            background: color-mix(in srgb, var(--good) 14%, transparent);
+        }
+
+        [data-theme="light"] #resultTable .net-pill {
+            background: color-mix(in srgb, var(--good) 22%, transparent);
+        }
+
+
+
+
+
     </style>
 </head>
 <body>
@@ -433,8 +493,7 @@
                             Withdrawal strategy
                             <select id="withdrawStrategy">
                                 <option value="isaFirst">ISA first</option>
-                                <option value="taxEfficient">Tax efficient (smoothed)</option>
-                                <option value="taxEfficientStrict">Tax efficient (strict PA)</option>
+                                <option value="taxEfficient">Pension First</option>
                             </select>
                         </label>
 
@@ -551,12 +610,15 @@
                                     <th class="right">Pension total</th>
                                     <th class="right">ISA total</th>
                                     <th class="right">State pension</th>
-                                    <th class="right">Gross spend target</th>
+                                    <th class="right">Net spend target</th>
                                     <th class="right">Taken from ISA</th>
                                     <th class="right">Taken from pension (gross)</th>
                                     <th class="right">Tax paid</th>
                                     <th class="right">Net delivered</th>
-                                    <th class="right">Shortfall</th>
+                                    <th class="right">PCLS used</th>
+                                    <th class="right">PCLS left</th>
+                                    <th class="right">Tax saved (PCLS)</th>
+                                    <th class="right">Net Shortfall</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -870,6 +932,56 @@
             $("isaTable").addEventListener("click", onTableClick);
         }
 
+        function netFromPensionForGross(stateIncome, pensionGross, pclsRemaining, country) {
+            // Split pension into tax-free / taxable (UFPLS-like until pclsRemaining runs out)
+            let taxFree = 0;
+            let taxable = pensionGross;
+
+            if (pclsRemaining > 0 && pensionGross > 0) {
+                const maxTaxFree = pensionGross * 0.25;
+                taxFree = Math.min(maxTaxFree, pclsRemaining);
+                taxable = pensionGross - taxFree;
+            }
+
+            // Tax attributable to pension = total tax with pension - tax with state only
+            const taxTotal = computeIncomeTax(stateIncome + taxable, country);
+            const taxOnStateOnly = computeIncomeTax(stateIncome, country);
+            const taxOnPension = Math.max(0, taxTotal - taxOnStateOnly);
+
+            const net = pensionGross - taxOnPension;
+            return { net, taxable, taxFree, taxOnPension };
+        }
+
+        function solvePensionGrossForNet(stateIncome, netNeededFromPension, pclsRemaining, country, pensionCapGross) {
+            if (netNeededFromPension <= 0) return { gross: 0, taxable: 0, taxFree: 0, taxOnPension: 0 };
+
+            // Upper bound: if you withdrew all remaining pension, what's the max net?
+            const max = Math.max(0, pensionCapGross);
+            const maxEval = netFromPensionForGross(stateIncome, max, pclsRemaining, country);
+            if (maxEval.net <= netNeededFromPension + 0.01) {
+                // Can't reach the needed net even with full pension
+                return { gross: max, taxable: maxEval.taxable, taxFree: maxEval.taxFree, taxOnPension: maxEval.taxOnPension, hitCap: true };
+            }
+
+            let lo = 0, hi = max;
+            let best = null;
+
+            for (let i = 0; i < 30; i++) { // plenty for pennies accuracy
+                const mid = (lo + hi) / 2;
+                const evalMid = netFromPensionForGross(stateIncome, mid, pclsRemaining, country);
+
+                if (evalMid.net >= netNeededFromPension) {
+                    best = { gross: mid, taxable: evalMid.taxable, taxFree: evalMid.taxFree, taxOnPension: evalMid.taxOnPension };
+                    hi = mid;
+                } else {
+                    lo = mid;
+                }
+            }
+
+            return best || { gross: max, taxable: maxEval.taxable, taxFree: maxEval.taxFree, taxOnPension: maxEval.taxOnPension, hitCap: true };
+        }
+
+
         // ---- Projection ----
         function runProjection() {
             //console.log("Strategy:", $("withdrawStrategy")?.value);
@@ -923,8 +1035,8 @@
 
             let statePensionYearly = statePension0;
 
-            // Gross spend target (this is what you "try to take in", not net-of-tax)
-            let spendTargetGross = withdraw0;
+            // Net spend target (what the user wants to RECEIVE after tax)
+            let spendTargetNet = withdraw0;
 
             // PCLS handling
             // - If takePclsUpfront: we take a one-off lump sum at retirement and set remaining to 0
@@ -984,6 +1096,9 @@
                 let takenIsa = 0;
                 let takenPensionGross = 0;
                 let taxPaid = 0;
+                let pclsUsedThisYear = 0;
+                let pclsRemainingEnd = pclsRemaining; // will update after withdrawals
+                let pclsTaxSavedThisYear = 0;
 
                 // For tax split when pension is used
                 let taxFreePart = 0;
@@ -994,15 +1109,14 @@
                 let couldNotMeet = false;
 
                 // We'll store "this year's target" before we inflate for next year
-                const targetThisYear = isRetired ? spendTargetGross : 0;
+                const targetThisYear = isRetired ? spendTargetNet : 0;
 
                 if (isRetired) {
                     const canUsePension = age >= pensionAccessAge;
                     const pensionLocked = !canUsePension;
 
-
-                    // How much gross we still need after state pension
-                    let remainingGrossNeeded = Math.max(0, spendTargetGross - stateIncome);
+                    // Net target for this year (what the user wants to RECEIVE)
+                    let remainingNetNeeded = Math.max(0, spendTargetNet - stateIncome);
                     const isaTotalAtStartOfYear = sumAssets(isas);
 
 
@@ -1017,9 +1131,9 @@
                     
                         // --- ISA FIRST ---
                         const isaTotal = sumAssets(isas);
-                        const isaUse = Math.min(isaTotal, remainingGrossNeeded);
+                        const isaUse = Math.min(isaTotal, remainingNetNeeded);
                         takenIsa = isaUse;
-                        remainingGrossNeeded -= isaUse;
+                        remainingNetNeeded -= isaUse;
 
                         if (isaUse > 0 && isaTotal > 0) {
                             for (const a of isas) {
@@ -1029,25 +1143,34 @@
                             }
                         }
 
-                        if (canUsePension && remainingGrossNeeded > 0) {
+                        // Pension to cover remaining NET (solve for gross)
+                        if (canUsePension && remainingNetNeeded > 0) {
                             const pensionTotal = sumAssets(pensions);
-                            takenPensionGross = Math.min(pensionTotal, remainingGrossNeeded);
-                            remainingGrossNeeded -= takenPensionGross;
 
-                            totalGrossPension += takenPensionGross;
+                            const solved = solvePensionGrossForNet(
+                                stateIncome,
+                                remainingNetNeeded,
+                                pclsRemaining,
+                                country,
+                                pensionTotal
+                            );
 
-                            let taxFreePart = 0;
-                            let taxablePart = takenPensionGross;
+                            takenPensionGross = solved.gross;
 
-                            if (pclsRemaining > 0 && takenPensionGross > 0) {
-                                const maxTaxFreeThisYear = takenPensionGross * 0.25;
-                                taxFreePart = Math.min(maxTaxFreeThisYear, pclsRemaining);
-                                taxablePart = takenPensionGross - taxFreePart;
-                                pclsRemaining -= taxFreePart;
-                            }
+                            // consume PCLS
+                            pclsUsedThisYear = solved.taxFree;
+                            if (pclsRemaining > 0) pclsRemaining = Math.max(0, pclsRemaining - solved.taxFree);
+                            pclsRemainingEnd = pclsRemaining;
 
-                            totalTaxablePension += taxablePart;
+                            // taxable pension drives tax calc
+                            totalTaxablePension += solved.taxable;
 
+                            // tax saved metric
+                            const taxTotalIfFullyTaxable = computeIncomeTax(stateIncome + takenPensionGross, country);
+                            const taxTotalWithPclsSplit = computeIncomeTax(stateIncome + solved.taxable, country);
+                            pclsTaxSavedThisYear = Math.max(0, taxTotalIfFullyTaxable - taxTotalWithPclsSplit);
+
+                            // reduce pension pots proportionally ONCE
                             if (takenPensionGross > 0 && pensionTotal > 0) {
                                 for (const p of pensions) {
                                     const share = p.value / pensionTotal;
@@ -1055,7 +1178,12 @@
                                     if (p.value < 0) p.value = 0;
                                 }
                             }
+
+                            // reduce remaining net need by the net delivered from pension
+                            const netFromPensionThisYear = Math.max(0, takenPensionGross - solved.taxOnPension);
+                            remainingNetNeeded = Math.max(0, remainingNetNeeded - netFromPensionThisYear);
                         }
+
 
                     } else if (withdrawStrategy === "taxEfficient") {
                     
@@ -1333,12 +1461,11 @@
 
                     // shortfall vs the gross target (as requested: target is “amount set + inflation”)
                     // We only care if we couldn't WITHDRAW the gross target (tax is expected)
-                    shortfall = Math.max(0, remainingGrossNeeded);
+                    shortfall = Math.max(0, remainingNetNeeded);
                     couldNotMeet = shortfall > 0.01;
 
 
-                    // 5) Increase target for next year
-                    spendTargetGross *= (1 + inflation);
+
 
                     // push results (inside retired block so netDelivered is available)
                     const pensionTotalNow = sumAssets(pensions);
@@ -1355,9 +1482,17 @@
                         takenPensionGross,
                         taxPaid,
                         netDelivered,
+                        pclsUsedThisYear,
+                        pclsRemainingEnd,
+                        pclsTaxSavedThisYear,
                         shortfall,
                         couldNotMeet
                     });
+
+                    // 5) Increase target for next year
+                    spendTargetNet *= (1 + inflation);
+
+
                 } else {
                     // Pre-retirement row (no spending)
                     const pensionTotalNow = sumAssets(pensions);
@@ -1374,6 +1509,9 @@
                         takenPensionGross: 0,
                         taxPaid: 0,
                         netDelivered: 0,
+                        pclsUsedThisYear: 0,
+                        pclsRemainingEnd: pclsRemaining,
+                        pclsTaxSavedThisYear: 0,
                         shortfall: 0,
                         couldNotMeet: false
                     });
@@ -1402,6 +1540,13 @@
             const rows = state.results || [];
             for (const r of rows) {
                 const tr = document.createElement("tr");
+
+                // Highlight the year PCLS runs out
+                if ((r.pclsRemainingEnd || 0) <= 0.01 && (r.pclsUsedThisYear || 0) > 0.01) {
+                    tr.style.outline = "2px solid color-mix(in srgb, var(--warn) 60%, transparent)";
+                    tr.style.outlineOffset = "-2px";
+                }
+
                 // Highlight pension-locked years (retired but can't access pension yet)
                 if (r.pensionLocked && (r.shortfall || 0) <= 0.01) {
                     tr.style.background = "color-mix(in srgb, var(--warn) 12%, transparent)";
@@ -1430,8 +1575,12 @@
               <td class="right">${money0(r.takenIsa)}</td>
               <td class="right">${money0(r.takenPensionGross)}</td>
               <td class="right">${money0(r.taxPaid)}</td>
-              <td class="right">${money0(r.netDelivered)}</td>
-<td class="right">${money0(r.shortfall)}</td>
+              <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
+              <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
+                <td class="right">${money0(r.pclsRemainingEnd || 0)}</td>
+                <td class="right">${money0(r.pclsTaxSavedThisYear || 0)}</td>
+
+                <td class="right">${money0(r.shortfall)}</td>
 
             `;
                 tb.appendChild(tr);
@@ -1453,7 +1602,7 @@
             const rows = state.results || [];
             if (!rows.length) return;
 
-            const headers = ["Age", "PensionTotal", "ISATotal", "StatePension", "NetSpendTarget", "TakenISA", "TakenPensionGross", "TaxPaid", "NetDelivered"];
+            const headers = ["Age", "PensionTotal", "ISATotal", "StatePension", "SpendTargetGross", "TakenISA", "TakenPensionGross", "TaxPaid", "NetDelivered", "Shortfall", "PclsUsed", "PclsLeft", "TaxSavedPcls"];
             const lines = [headers.join(",")];
 
             for (const r of rows) {
@@ -1466,7 +1615,11 @@
                     Math.round(r.takenIsa),
                     Math.round(r.takenPensionGross),
                     Math.round(r.taxPaid),
-                    Math.round(r.netDelivered)
+                    Math.round(r.netDelivered),
+                    Math.round(r.pclsUsedThisYear || 0),
+                    Math.round(r.pclsRemainingEnd || 0),
+                    Math.round(r.pclsTaxSavedThisYear || 0),
+                    Math.round(r.shortfall || 0)
                 ].join(",");
                 lines.push(line);
             }
