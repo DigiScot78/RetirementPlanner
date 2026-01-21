@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Financial Planner (Single Page)</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #121823;
+            --panel2: #0f1520;
+            --text: #e7edf5;
+            --muted: #a9b4c2;
+            --border: rgba(255,255,255,.10);
+            --accent: #7aa7ff;
+            --good: #6ee7b7;
+            --bad: #fb7185;
+            --warn: #fbbf24;
+            --shadow: 0 10px 30px rgba(0,0,0,.35);
+            --radius: 14px;
+            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+            --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+        }
+
+        [data-theme="light"] {
+            --bg: #f6f8fb;
+            --panel: #ffffff;
+            --panel2: #f3f6fb;
+            --text: #152033;
+            --muted: #5b6b82;
+            --border: rgba(15,32,51,.12);
+            --accent: #2d6cff;
+            --shadow: 0 12px 34px rgba(15,32,51,.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--sans);
+            background: radial-gradient(1200px 800px at 20% 0%, rgba(122,167,255,.18), transparent 55%), radial-gradient(900px 700px at 100% 10%, rgba(110,231,183,.14), transparent 55%), var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+            background: color-mix(in srgb, var(--bg) 78%, transparent);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 18px 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: .2px;
+            font-weight: 700;
+        }
+
+        .sub {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, white 8%), var(--panel));
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform .05s ease, border-color .2s ease;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+            .btn:active {
+                transform: translateY(1px);
+            }
+
+            .btn.secondary {
+                background: transparent;
+                box-shadow: none;
+            }
+
+            .btn.small {
+                padding: 7px 10px;
+                border-radius: 10px;
+                font-weight: 700;
+                font-size: 12px;
+                box-shadow: none;
+            }
+
+            .btn.danger {
+                border-color: color-mix(in srgb, var(--bad) 55%, var(--border));
+                color: color-mix(in srgb, var(--bad) 85%, var(--text));
+                background: color-mix(in srgb, var(--bad) 10%, transparent);
+            }
+
+        .pill {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--muted);
+            background: color-mix(in srgb, var(--panel) 70%, transparent);
+        }
+
+        main .grid {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        @media (max-width: 980px) {
+            main .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 94%, white 6%), var(--panel));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+            .card h2 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+
+            .card .head {
+                padding: 14px 14px 10px 14px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .card .body {
+                padding: 14px;
+            }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        input[type="number"], input[type="date"], select {
+            width: 100%;
+            padding: 10px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--panel2) 75%, transparent);
+            color: var(--text);
+            outline: none;
+        }
+
+            input[type="number"]:focus, input[type="date"]:focus, select:focus {
+                border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+                box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+            }
+
+        .checkrow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding-top: 6px;
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            font-size: 13px;
+            user-select: none;
+        }
+
+            .check input {
+                width: 16px;
+                height: 16px;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--panel2) 50%, transparent);
+        }
+
+        th, td {
+            padding: 10px 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 800;
+            font-size: 12px;
+            text-align: left;
+            letter-spacing: .15px;
+            background: color-mix(in srgb, var(--panel2) 70%, transparent);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .t-actions {
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .right {
+            text-align: right;
+            font-family: var(--mono);
+        }
+
+        .mono {
+            font-family: var(--mono);
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 700px) {
+            .kpis {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .kpi {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            background: color-mix(in srgb, var(--panel2) 60%, transparent);
+        }
+
+            .kpi .k {
+                font-size: 12px;
+                color: var(--muted);
+            }
+
+            .kpi .v {
+                margin-top: 6px;
+                font-size: 18px;
+                font-weight: 900;
+                font-family: var(--mono);
+                letter-spacing: .2px;
+            }
+
+            .kpi .s {
+                margin-top: 6px;
+                font-size: 12px;
+                color: var(--muted);
+            }
+
+        .scroll {
+            overflow: auto;
+            max-height: 72vh;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .note {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.4;
+            margin-top: 10px;
+        }
+
+        .warnbox {
+            border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
+            background: color-mix(in srgb, var(--warn) 12%, transparent);
+            border-radius: 14px;
+            padding: 10px 12px;
+            color: color-mix(in srgb, var(--warn) 85%, var(--text));
+            font-size: 12px;
+            line-height: 1.4;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="wrap">
+            <div class="row">
+                <div>
+                    <h1>Financial Planner</h1>
+                    <div class="sub">Single-file HTML + JS • Adds pensions & ISAs • Projects year-by-year • ISA-first drawdown at retirement</div>
+                </div>
+                <div class="row" style="justify-content:flex-end;">
+                    <span class="pill" id="todayPill"></span>
+                    <button class="btn secondary" id="btnExport">Export</button>
+                    <button class="btn secondary" id="btnImport">Import</button>
+                    <input type="file" id="importFile" accept="application/json" style="display:none" />
+                    <button class="btn secondary" id="btnReset" title="Clear saved inputs">Reset</button>
+                    <button class="btn" id="btnTheme">Toggle Theme</button>
+                    <button class="btn" id="btnRun">Run Projection</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <div class="grid">
+            <section class="card">
+                <div class="head">
+                    <h2>Inputs</h2>
+                    <div class="row">
+                        <span class="pill" id="agePill">Age: —</span>
+                        <span class="pill" id="yearsPill">Years: —</span>
+                    </div>
+                </div>
+                <div class="body">
+                    <div class="form-grid">
+                        <label>
+                            Date of birth
+                            <input type="date" id="dob" />
+                        </label>
+
+                        <label>
+                            Planned age of retirement
+                            <input type="number" id="retAge" min="30" max="90" step="1" value="57" />
+                        </label>
+
+                        <label>
+                            Pension access age
+                            <input type="number" id="pensionAccessAge" min="50" max="90" step="1" value="57" />
+                        </label>
+
+
+                        <label>
+                            State pension age
+                            <input type="number" id="spa" min="50" max="90" step="1" value="67" />
+                        </label>
+
+                        <label>
+                            Expected state pension (yearly, gross)
+                            <input type="number" id="statePension" min="0" step="100" value="11500" />
+                        </label>
+
+                        <label>
+                            Max tax-free lump sum cap (default 268,275)
+                            <input type="number" id="pclsCap" min="0" step="1000" value="268275" />
+                        </label>
+
+                        <label>
+                            State pension yearly increase %
+                            <input type="number" id="stateInc" min="-10" step="0.1" value="2.5" />
+                        </label>
+
+                        <label>
+                            Inflation increase % (spending index)
+                            <input type="number" id="inflation" min="-10" step="0.1" value="2.5" />
+                        </label>
+
+                        <label>
+                            Expected run out of funds by (age)
+                            <input type="number" id="runOutAge" min="55" max="110" step="1" value="85" />
+                        </label>
+
+                        <label>
+                            Yearly withdrawal amount (net spending target)
+                            <input type="number" id="withdrawal" min="0" step="500" value="36000" />
+                        </label>
+
+                        <label>
+                            Country
+                            <select id="country">
+                                <option value="rUK">Rest of UK (England/Wales/NI)</option>
+                                <option value="scotland">Scotland</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Withdrawal strategy
+                            <select id="withdrawStrategy">
+                                <option value="isaFirst">ISA first</option>
+                                <option value="taxEfficient">Tax efficient (smoothed)</option>
+                                <option value="taxEfficientStrict">Tax efficient (strict PA)</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Take tax-free lump sum at retirement?
+                            <div class="checkrow">
+                                <label class="check">
+                                    <input type="checkbox" id="takePcls" checked />
+                                    Yes (PCLS)
+                                </label>
+                                <label class="check">
+                                    <input type="checkbox" id="pclsToIsa" checked />
+                                    Add PCLS into ISA bucket (so it’s spent ISA-first)
+                                </label>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="warnbox" id="taxNoteBox">
+                        Tax bands are built-in defaults (can be edited in code). If you want exact “current-year” UK/Scottish bands/allowances,
+                        tweak the <span class="mono">TAX</span> constants in the script.
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="head">
+                    <h2>Assets</h2>
+                    <div class="row">
+                        <button class="btn small" id="addPension">+ Add Pension</button>
+                        <button class="btn small" id="addIsa">+ Add ISA</button>
+                    </div>
+                </div>
+                <div class="body">
+                    <div style="display:grid; gap: 12px;">
+                        <div>
+                            <div class="row" style="margin-bottom:8px;">
+                                <div class="pill">Pensions</div>
+                                <div class="muted" style="font-size:12px;">Click cells to edit.</div>
+                            </div>
+                            <table id="pensionTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="right">Current value</th>
+                                        <th class="right">Monthly add</th>
+                                        <th class="right">Yearly growth %</th>
+                                        <th class="t-actions"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <div>
+                            <div class="row" style="margin-bottom:8px;">
+                                <div class="pill">ISAs</div>
+                                <div class="muted" style="font-size:12px;">Click cells to edit.</div>
+                            </div>
+                            <table id="isaTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="right">Current value</th>
+                                        <th class="right">Monthly add</th>
+                                        <th class="right">Yearly growth %</th>
+                                        <th class="t-actions"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <div class="note">
+                            Growth is applied yearly (simple annual compounding). Monthly additions are applied only before retirement.
+                            At retirement: contributions stop; withdrawals begin (ISA-first by default).
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" style="grid-column: 1 / -1;">
+                <div class="head">
+                    <h2>Projection</h2>
+                    <div class="row">
+                        <span class="pill" id="statusPill">Ready</span>
+                        <button class="btn small secondary" id="btnDownloadCsv">Download CSV</button>
+                    </div>
+                </div>
+                <div class="body">
+                    <div class="kpis">
+                        <div class="kpi">
+                            <div class="k">Total pension now</div>
+                            <div class="v" id="kpiPensionNow">—</div>
+                            <div class="s muted" id="kpiPensionNowS"></div>
+                        </div>
+                        <div class="kpi">
+                            <div class="k">Total ISA now</div>
+                            <div class="v" id="kpiIsaNow">—</div>
+                            <div class="s muted" id="kpiIsaNowS"></div>
+                        </div>
+                        <div class="kpi">
+                            <div class="k">First-year gross spending target</div>
+                            <div class="v" id="kpiSpend">—</div>
+                            <div class="s muted" id="kpiSpendS"></div>
+                        </div>
+                    </div>
+
+                    <div class="scroll">
+                        <table id="resultTable">
+                            <thead>
+                                <tr>
+                                    <th>Age</th>
+                                    <th class="right">Pension total</th>
+                                    <th class="right">ISA total</th>
+                                    <th class="right">State pension</th>
+                                    <th class="right">Gross spend target</th>
+                                    <th class="right">Taken from ISA</th>
+                                    <th class="right">Taken from pension (gross)</th>
+                                    <th class="right">Tax paid</th>
+                                    <th class="right">Net delivered</th>
+                                    <th class="right">Shortfall</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="note" id="resultNote"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        /**********************
+         * Simple Financial Planner
+         * - Assets: Pension + ISA rows
+         * - Accumulation until retirement age (contributions + growth)
+         * - Retirement: ISA-first drawdown, then pension
+         * - State pension reduces required draw
+         * - UK/Scottish income tax approximation on taxable income (pension + state pension)
+         *
+         * NOTES / Assumptions:
+         * - "Yearly withdrawal amount" is treated as NET spending target (what you want to live on).
+         * - ISA withdrawals are tax-free.
+         * - State pension is taxable income.
+         * - Pension withdrawals are taxable income.
+         * - We compute the gross pension withdrawal needed to fund the remaining net spending after ISA + state pension,
+         *   solving for tax iteratively.
+         * - Optional PCLS (tax-free lump sum) at retirement: 25% of pension total, capped by pclsCap, removed from pension.
+         *   If "Add PCLS into ISA bucket" is checked, it gets added to ISA total.
+         **********************/
+
+        const $ = (id) => document.getElementById(id);
+
+        // ---- Tax defaults (EDIT THESE if you want exact current-year figures) ----
+        // These are reasonable "classic" UK-style thresholds, but you should adjust to your target tax year.
+        const TAX = {
+            personalAllowance: 12570,
+            allowanceTaperStart: 100000,
+            allowanceTaperEnd: 125140,
+
+            // thresholds below are for TAXABLE income (after personal allowance)
+            rUK: [
+                { upToTaxable: 37700, rate: 0.20 },     // basic
+                { upToTaxable: 112570, rate: 0.40 },    // higher
+                { upToTaxable: Infinity, rate: 0.45 }   // additional
+            ],
+
+            // Simplified Scotland (taxable thresholds). Adjust later if you want exact tax-year fidelity.
+            scotland: [
+                { upToTaxable: 2162, rate: 0.19 },      // starter
+                { upToTaxable: 13118, rate: 0.20 },     // basic
+                { upToTaxable: 31092, rate: 0.21 },     // intermediate
+                { upToTaxable: 62430, rate: 0.42 },     // higher
+                { upToTaxable: 112570, rate: 0.45 },    // advanced/top-ish approximation
+                { upToTaxable: Infinity, rate: 0.48 }
+            ]
+        };
+
+
+        // ---- State ----
+        const state = {
+            theme: "dark",
+            pensions: [
+                { name: "Workplace", value: 250000, monthly: 3360, growth: 5.0 },
+            ],
+            isas: [
+                { name: "ISA", value: 17000, monthly: 700, growth: 5.0 },
+            ],
+            results: []
+        };
+
+        // ---- Persistence ----
+        const STORAGE_KEY = "fp_singlepage_v1";
+
+        function loadState() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === "object") {
+                    Object.assign(state, parsed);
+                }
+            } catch (e) { }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function setTheme(theme) {
+            state.theme = theme;
+            document.documentElement.setAttribute("data-theme", theme === "light" ? "light" : "dark");
+            saveState();
+        }
+
+        // ---- Helpers ----
+        const fmt0 = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+        const fmt2 = new Intl.NumberFormat("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const money0 = (n) => "£" + fmt0.format(Math.round(n));
+        const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+        function todayLocalISO() {
+            const d = new Date();
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function calcAge(dobISO) {
+            if (!dobISO) return null;
+            const dob = new Date(dobISO);
+            const now = new Date();
+            let age = now.getFullYear() - dob.getFullYear();
+            const m = now.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+            return age;
+        }
+
+        function sumAssets(list) {
+            return list.reduce((a, x) => a + (Number(x.value) || 0), 0);
+        }
+
+        function yearlyContribution(list) {
+            return list.reduce((a, x) => a + (Number(x.monthly) || 0) * 12, 0);
+        }
+
+        function applyGrowth(list) {
+            for (const a of list) {
+                const g = (Number(a.growth) || 0) / 100;
+                a.value = (Number(a.value) || 0) * (1 + g);
+            }
+        }
+
+        function applyContrib(list) {
+            for (const a of list) {
+                a.value = (Number(a.value) || 0) + (Number(a.monthly) || 0) * 12;
+            }
+        }
+
+        function shallowCloneAssets(list) {
+            return list.map(x => ({
+                name: String(x.name ?? ""),
+                value: Number(x.value) || 0,
+                monthly: Number(x.monthly) || 0,
+                growth: Number(x.growth) || 0
+            }));
+        }
+
+        // Personal allowance tapering (simplified)
+        function personalAllowanceForIncome(totalTaxableIncome) {
+            const base = TAX.personalAllowance;
+            if (totalTaxableIncome <= TAX.allowanceTaperStart) return base;
+            if (totalTaxableIncome >= TAX.allowanceTaperEnd) return 0;
+            const reduction = (totalTaxableIncome - TAX.allowanceTaperStart) / 2;
+            return clamp(base - reduction, 0, base);
+        }
+
+        // Compute income tax given total taxable income and country
+        function computeIncomeTax(totalIncome, country) {
+            totalIncome = Math.max(0, totalIncome);
+            const pa = personalAllowanceForIncome(totalIncome);
+            let taxable = Math.max(0, totalIncome - pa);
+
+            const bands = country === "scotland" ? TAX.scotland : TAX.rUK;
+
+            let tax = 0;
+            let prev = 0;
+
+            for (const b of bands) {
+                const limit = b.upToTaxable;
+                const slice = Math.max(0, Math.min(taxable, limit) - prev);
+                tax += slice * b.rate;
+                prev = limit;
+                if (prev >= taxable) break;
+            }
+            return tax;
+        }
+
+
+        // Solve for gross pension withdrawal required to deliver a net amount, given other taxable income (state pension)
+        function solveGrossForNet(netNeeded, otherTaxableIncome, country) {
+            netNeeded = Math.max(0, netNeeded);
+
+            // If netNeeded is 0, gross is 0.
+            if (netNeeded === 0) return { gross: 0, tax: 0, net: 0 };
+
+            // Simple fixed-point / binary search on gross
+            let lo = 0;
+            let hi = netNeeded * 2 + 50000; // generous upper bound
+            for (let i = 0; i < 40; i++) {
+                const mid = (lo + hi) / 2;
+                const totalTaxable = otherTaxableIncome + mid;
+                const taxTotal = computeIncomeTax(totalTaxable, country);
+                const taxOnOtherOnly = computeIncomeTax(otherTaxableIncome, country);
+                const incrementalTax = Math.max(0, taxTotal - taxOnOtherOnly);
+                const netFromPension = mid - incrementalTax;
+
+                if (netFromPension >= netNeeded) hi = mid;
+                else lo = mid;
+            }
+
+            const gross = hi;
+            const totalTaxable = otherTaxableIncome + gross;
+            const taxTotal = computeIncomeTax(totalTaxable, country);
+            const taxOnOtherOnly = computeIncomeTax(otherTaxableIncome, country);
+            const incrementalTax = Math.max(0, taxTotal - taxOnOtherOnly);
+            const net = gross - incrementalTax;
+
+            return { gross, tax: incrementalTax, net };
+        }
+
+        // ---- UI: tables ----
+        function assetRowHTML(asset, idx, type) {
+            const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            return `
+            <tr data-type="${type}" data-idx="${idx}">
+              <td contenteditable="true" data-field="name">${esc(asset.name)}</td>
+              <td class="right" contenteditable="true" data-field="value">${fmt0.format(Number(asset.value) || 0)}</td>
+              <td class="right" contenteditable="true" data-field="monthly">${fmt0.format(Number(asset.monthly) || 0)}</td>
+              <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(asset.growth) || 0)}</td>
+              <td class="t-actions">
+                <button class="btn small danger" data-action="del">Del</button>
+              </td>
+            </tr>
+          `;
+        }
+
+        function renderAssetTables() {
+            const pBody = $("pensionTable").querySelector("tbody");
+            const iBody = $("isaTable").querySelector("tbody");
+            pBody.innerHTML = state.pensions.map((a, i) => assetRowHTML(a, i, "pension")).join("");
+            iBody.innerHTML = state.isas.map((a, i) => assetRowHTML(a, i, "isa")).join("");
+
+            // KPI now
+            const pNow = sumAssets(state.pensions);
+            const iNow = sumAssets(state.isas);
+            $("kpiPensionNow").textContent = money0(pNow);
+            $("kpiIsaNow").textContent = money0(iNow);
+            $("kpiPensionNowS").textContent = `Across ${state.pensions.length} pot(s)`;
+            $("kpiIsaNowS").textContent = `Across ${state.isas.length} ISA(s)`;
+
+            saveState();
+        }
+
+        function parseEditableCell(text) {
+            // strip currency commas etc
+            const clean = String(text).replace(/[£, ]/g, "").trim();
+            if (clean === "") return 0;
+            const n = Number(clean);
+            return Number.isFinite(n) ? n : 0;
+        }
+
+        function attachTableHandlers() {
+            function onTableInput(e) {
+                const cell = e.target;
+                if (!(cell instanceof HTMLElement)) return;
+                const tr = cell.closest("tr");
+                if (!tr) return;
+                const type = tr.getAttribute("data-type");
+                const idx = Number(tr.getAttribute("data-idx"));
+                const field = cell.getAttribute("data-field");
+                if (!type || !Number.isFinite(idx) || !field) return;
+
+                const list = type === "pension" ? state.pensions : state.isas;
+                const a = list[idx];
+                if (!a) return;
+
+                if (field === "name") {
+                    a.name = cell.textContent.trim() || (type === "pension" ? "Pension" : "ISA");
+                } else {
+                    a[field] = parseEditableCell(cell.textContent);
+                }
+                saveState();
+            }
+
+            function onTableBlur(e) {
+                const cell = e.target;
+                if (!(cell instanceof HTMLElement)) return;
+                const field = cell.getAttribute("data-field");
+                if (!field) return;
+                // format numbers nicely on blur
+                if (field !== "name") {
+                    const n = parseEditableCell(cell.textContent);
+                    if (field === "growth") cell.textContent = fmt2.format(n);
+                    else cell.textContent = fmt0.format(n);
+                }
+            }
+
+            function onTableClick(e) {
+                const btn = e.target;
+                if (!(btn instanceof HTMLElement)) return;
+                if (btn.getAttribute("data-action") !== "del") return;
+                const tr = btn.closest("tr");
+                if (!tr) return;
+                const type = tr.getAttribute("data-type");
+                const idx = Number(tr.getAttribute("data-idx"));
+                const list = type === "pension" ? state.pensions : state.isas;
+                if (list[idx]) {
+                    list.splice(idx, 1);
+                    renderAssetTables();
+                }
+            }
+
+            $("pensionTable").addEventListener("input", onTableInput);
+            $("isaTable").addEventListener("input", onTableInput);
+            $("pensionTable").addEventListener("blur", onTableBlur, true);
+            $("isaTable").addEventListener("blur", onTableBlur, true);
+            $("pensionTable").addEventListener("click", onTableClick);
+            $("isaTable").addEventListener("click", onTableClick);
+        }
+
+        // ---- Projection ----
+        function runProjection() {
+            //console.log("Strategy:", $("withdrawStrategy")?.value);
+
+
+            const dob = $("dob").value;
+            const ageNow = calcAge(dob);
+            const withdrawStrategy = $("withdrawStrategy").value || "isaFirst";
+
+            if (ageNow === null) {
+                $("statusPill").textContent = "Enter date of birth";
+                return;
+            }
+
+            const retAge = Number($("retAge").value) || 0;
+            const pensionAccessAge = Number($("pensionAccessAge").value) || 57;
+
+            const spa = Number($("spa").value) || 0;
+            const statePension0 = Number($("statePension").value) || 0;
+            const pclsCap = Number($("pclsCap").value) || 0;
+            const stateInc = (Number($("stateInc").value) || 0) / 100;
+            const inflation = (Number($("inflation").value) || 0) / 100;
+            const runOutAge = Number($("runOutAge").value) || 0;
+            const withdraw0 = Number($("withdrawal").value) || 0;
+            const country = $("country").value;
+
+            const takePclsUpfront = $("takePcls").checked; // "Take tax-free lump sum at retirement?"
+            const pclsToIsa = $("pclsToIsa").checked;
+
+            $("kpiSpend").textContent = money0(withdraw0);
+            $("kpiSpendS").textContent = `Indexed by inflation (${(inflation * 100).toFixed(1)}%)`;
+
+            if (retAge <= ageNow) {
+                $("statusPill").textContent = "Retirement age must be > current age";
+                return;
+            }
+            if (runOutAge <= ageNow) {
+                $("statusPill").textContent = "Run-out age must be > current age";
+                return;
+            }
+            if (pensionAccessAge > runOutAge) {
+                $("statusPill").textContent = "Pension access age must be <= run-out age";
+                return;
+            }
+
+            // Work with clones so we don't mutate user-entered "current"
+            const pensions = shallowCloneAssets(state.pensions);
+            const isas = shallowCloneAssets(state.isas);
+
+            const results = [];
+
+            let statePensionYearly = statePension0;
+
+            // Gross spend target (this is what you "try to take in", not net-of-tax)
+            let spendTargetGross = withdraw0;
+
+            // PCLS handling
+            // - If takePclsUpfront: we take a one-off lump sum at retirement and set remaining to 0
+            // - Else: we allow 25% tax-free on each pension withdrawal until pclsRemaining hits 0 (UFPLS-like)
+            let pclsRemaining = takePclsUpfront ? 0 : pclsCap;
+            let upfrontPclsDone = false;
+
+            for (let age = ageNow; age <= runOutAge; age++) {
+                const isRetired = age >= retAge;
+
+                // Contributions stop at retirement
+                if (!isRetired) {
+                    applyContrib(pensions);
+                    applyContrib(isas);
+                }
+
+                // Growth applies every year
+                applyGrowth(pensions);
+                applyGrowth(isas);
+
+                // One-off PCLS at the first retirement year if selected
+                if (isRetired && !upfrontPclsDone && takePclsUpfront) {
+                    const pensionTotal = sumAssets(pensions);
+                    const maxBy25pct = pensionTotal * 0.25;
+                    const pcls = Math.min(maxBy25pct, pclsCap);
+
+                    if (pcls > 0 && pensionTotal > 0) {
+                        // remove proportionally from pensions
+                        for (const p of pensions) {
+                            const share = p.value / pensionTotal;
+                            p.value -= pcls * share;
+                            if (p.value < 0) p.value = 0;
+                        }
+
+                        // optionally add to ISA bucket so it is spent ISA-first
+                        if (pclsToIsa) {
+                            if (isas.length === 0) {
+                                isas.push({ name: "PCLS/Cash", value: pcls, monthly: 0, growth: 0 });
+                            } else {
+                                isas[0].value += pcls;
+                            }
+                        }
+                    }
+
+                    upfrontPclsDone = true;
+                    pclsRemaining = 0; // using upfront PCLS consumes the allowance model in this simplified planner
+                }
+
+                // State pension income
+                let stateIncome = 0;
+                if (age >= spa) {
+                    stateIncome = statePensionYearly;
+                    statePensionYearly *= (1 + stateInc);
+                }
+
+                // Drawdown fields
+                let takenIsa = 0;
+                let takenPensionGross = 0;
+                let taxPaid = 0;
+
+                // For tax split when pension is used
+                let taxFreePart = 0;
+                let taxablePart = 0;
+
+                // Shortfall tracking
+                let shortfall = 0;
+                let couldNotMeet = false;
+
+                // We'll store "this year's target" before we inflate for next year
+                const targetThisYear = isRetired ? spendTargetGross : 0;
+
+                if (isRetired) {
+                    const canUsePension = age >= pensionAccessAge;
+                    const pensionLocked = !canUsePension;
+
+
+                    // How much gross we still need after state pension
+                    let remainingGrossNeeded = Math.max(0, spendTargetGross - stateIncome);
+                    const isaTotalAtStartOfYear = sumAssets(isas);
+
+
+                    // Strategy selection
+                    const withdrawStrategy = $("withdrawStrategy").value || "isaFirst";
+
+                    // We’ll track taxable pension separately (because 25% can be tax-free)
+                    let totalTaxablePension = 0;
+                    let totalGrossPension = 0;
+                    
+                    if (withdrawStrategy === "isaFirst") {
+                    
+                        // --- ISA FIRST ---
+                        const isaTotal = sumAssets(isas);
+                        const isaUse = Math.min(isaTotal, remainingGrossNeeded);
+                        takenIsa = isaUse;
+                        remainingGrossNeeded -= isaUse;
+
+                        if (isaUse > 0 && isaTotal > 0) {
+                            for (const a of isas) {
+                                const share = a.value / isaTotal;
+                                a.value -= isaUse * share;
+                                if (a.value < 0) a.value = 0;
+                            }
+                        }
+
+                        if (canUsePension && remainingGrossNeeded > 0) {
+                            const pensionTotal = sumAssets(pensions);
+                            takenPensionGross = Math.min(pensionTotal, remainingGrossNeeded);
+                            remainingGrossNeeded -= takenPensionGross;
+
+                            totalGrossPension += takenPensionGross;
+
+                            let taxFreePart = 0;
+                            let taxablePart = takenPensionGross;
+
+                            if (pclsRemaining > 0 && takenPensionGross > 0) {
+                                const maxTaxFreeThisYear = takenPensionGross * 0.25;
+                                taxFreePart = Math.min(maxTaxFreeThisYear, pclsRemaining);
+                                taxablePart = takenPensionGross - taxFreePart;
+                                pclsRemaining -= taxFreePart;
+                            }
+
+                            totalTaxablePension += taxablePart;
+
+                            if (takenPensionGross > 0 && pensionTotal > 0) {
+                                for (const p of pensions) {
+                                    const share = p.value / pensionTotal;
+                                    p.value -= takenPensionGross * share;
+                                    if (p.value < 0) p.value = 0;
+                                }
+                            }
+                        }
+
+                    } else if (withdrawStrategy === "taxEfficient") {
+                    
+                        // --- TAX EFFICIENT ---
+                        // 1) Use pension to fill remaining personal allowance (taxable part up to PA)
+                        // 2) Top up rest from ISA
+                        // 3) If ISA runs out, pension for remainder (if accessible)
+
+                        // Step 1: Pension to use up personal allowance headroom
+                        // Step 1: Pension to use up personal allowance headroom (works even if pclsRemaining = 0)
+                        if (canUsePension && remainingGrossNeeded > 0) {
+                            const pa = personalAllowanceForIncome(stateIncome);
+                            let paHeadroom = Math.max(0, pa - stateIncome); // taxable income headroom at 0% tax
+
+                            if (paHeadroom > 0) {
+                                const pensionTotal = sumAssets(pensions);
+                                if (pensionTotal > 0) {
+
+                                    // We want to generate up to paHeadroom of TAXABLE pension income.
+                                    // While pclsRemaining > 0, withdrawals are ~25% tax-free, 75% taxable.
+                                    // After pclsRemaining is used up, withdrawals are 100% taxable.
+
+                                    let grossPlanned = 0;
+                                    let taxablePlanned = 0;
+
+                                    // Part A: use any remaining PCLS to get 25% tax-free treatment
+                                    if (pclsRemaining > 0) {
+                                        // max gross that can still get 25% tax-free is limited by remaining tax-free allowance:
+                                        // taxFree = 25% * gross <= pclsRemaining  => gross <= pclsRemaining * 4
+                                        const grossMaxWithPcls = pclsRemaining * 4;
+
+                                        // taxable produced by a gross withdrawal with PCLS is 75% of gross
+                                        const taxableMaxWithPcls = grossMaxWithPcls * 0.75;
+
+                                        if (paHeadroom <= taxableMaxWithPcls) {
+                                            // We can fill all PA using only PCLS-eligible withdrawals
+                                            grossPlanned = paHeadroom / 0.75;
+                                            taxablePlanned = paHeadroom;
+                                        } else {
+                                            // Use all remaining PCLS-eligible amount first
+                                            grossPlanned = grossMaxWithPcls;
+                                            taxablePlanned = taxableMaxWithPcls;
+                                            paHeadroom -= taxablePlanned;
+                                        }
+                                    }
+
+                                    // Part B: if PA still not filled, withdraw fully taxable pension to fill the rest
+                                    if (paHeadroom > 0) {
+                                        grossPlanned += paHeadroom;      // fully taxable
+                                        taxablePlanned += paHeadroom;    // equals gross
+                                    }
+
+                                    // Cap by what we still need and what exists in pension
+                                    grossPlanned = Math.min(grossPlanned, remainingGrossNeeded, pensionTotal);
+
+                                    if (grossPlanned > 0) {
+                                        totalGrossPension += grossPlanned;
+                                        remainingGrossNeeded -= grossPlanned;
+
+                                        // Now compute tax-free/taxable split for the ACTUAL grossPlanned
+                                        let taxFreePart = 0;
+                                        let taxablePart = grossPlanned;
+
+                                        if (pclsRemaining > 0) {
+                                            const maxTaxFree = grossPlanned * 0.25;
+                                            taxFreePart = Math.min(maxTaxFree, pclsRemaining);
+                                            taxablePart = grossPlanned - taxFreePart;
+                                            pclsRemaining -= taxFreePart;
+                                        }
+
+                                        totalTaxablePension += taxablePart;
+
+                                        // Reduce pension pots proportionally
+                                        for (const p of pensions) {
+                                            const share = p.value / pensionTotal;
+                                            p.value -= grossPlanned * share;
+                                            if (p.value < 0) p.value = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                        // Step 2: ISA top-up
+                        if (remainingGrossNeeded > 0) {
+                            const isaTotal = sumAssets(isas);
+                            const isaUse = Math.min(isaTotal, remainingGrossNeeded);
+                            takenIsa += isaUse;
+                            remainingGrossNeeded -= isaUse;
+
+                            if (isaUse > 0 && isaTotal > 0) {
+                                for (const a of isas) {
+                                    const share = a.value / isaTotal;
+                                    a.value -= isaUse * share;
+                                    if (a.value < 0) a.value = 0;
+                                }
+                            }
+                        }
+
+                        // Step 3: Pension remainder (if ISA exhausted and still need money)
+                        if (canUsePension && remainingGrossNeeded > 0) {
+                            const pensionTotal = sumAssets(pensions);
+                            const grossRest = Math.min(pensionTotal, remainingGrossNeeded);
+
+                            if (grossRest > 0) {
+                                totalGrossPension += grossRest;
+                                remainingGrossNeeded -= grossRest;
+
+                                let taxFreePart = 0;
+                                let taxablePart = grossRest;
+
+                                if (pclsRemaining > 0) {
+                                    const maxTaxFree = grossRest * 0.25;
+                                    taxFreePart = Math.min(maxTaxFree, pclsRemaining);
+                                    taxablePart = grossRest - taxFreePart;
+                                    pclsRemaining -= taxFreePart;
+                                }
+
+                                totalTaxablePension += taxablePart;
+
+                                if (pensionTotal > 0) {
+                                    for (const p of pensions) {
+                                        const share = p.value / pensionTotal;
+                                        p.value -= grossRest * share;
+                                        if (p.value < 0) p.value = 0;
+                                    }
+                                }
+                            }
+                        }
+
+                        takenPensionGross = totalGrossPension;
+                    } else if (withdrawStrategy === "taxEfficientStrict") {
+                        // --- TAX EFFICIENT (STRICT PA) ---
+                        // Pension ONLY to fill Personal Allowance (0% tax),
+                        // ISA for everything else.
+                        // NO pension fallback if ISA can't cover the rest.
+
+                        // Step 1: Pension to fill remaining Personal Allowance (if accessible)
+                        if (canUsePension && remainingGrossNeeded > 0) {
+                            const pa = personalAllowanceForIncome(stateIncome);
+                            let paHeadroom = Math.max(0, pa - stateIncome);
+
+                            if (paHeadroom > 0) {
+                                const pensionTotal = sumAssets(pensions);
+                                if (pensionTotal > 0) {
+
+                                    let grossPlanned = 0;
+                                    let taxablePlanned = 0;
+
+                                    // Use PCLS-eligible withdrawals first (25% tax-free)
+                                    if (pclsRemaining > 0) {
+                                        const grossMaxWithPcls = pclsRemaining * 4;
+                                        const taxableMaxWithPcls = grossMaxWithPcls * 0.75;
+
+                                        if (paHeadroom <= taxableMaxWithPcls) {
+                                            grossPlanned = paHeadroom / 0.75;
+                                            taxablePlanned = paHeadroom;
+                                        } else {
+                                            grossPlanned = grossMaxWithPcls;
+                                            taxablePlanned = taxableMaxWithPcls;
+                                            paHeadroom -= taxablePlanned;
+                                        }
+                                    }
+
+                                    // If PA still not filled, allow fully-taxable pension
+                                    if (paHeadroom > 0) {
+                                        grossPlanned += paHeadroom;
+                                        taxablePlanned += paHeadroom;
+                                    }
+
+                                    // Cap by need and pension size
+                                    grossPlanned = Math.min(grossPlanned, remainingGrossNeeded, pensionTotal);
+
+                                    if (grossPlanned > 0) {
+                                        totalGrossPension += grossPlanned;
+                                        remainingGrossNeeded -= grossPlanned;
+
+                                        let taxFreePart = 0;
+                                        let taxablePart = grossPlanned;
+
+                                        if (pclsRemaining > 0) {
+                                            const maxTaxFree = grossPlanned * 0.25;
+                                            taxFreePart = Math.min(maxTaxFree, pclsRemaining);
+                                            taxablePart = grossPlanned - taxFreePart;
+                                            // Hard-cap taxable pension to PA headroom to guarantee zero tax in Phase 1
+                                            const pa = personalAllowanceForIncome(stateIncome);
+                                            const paHeadroom = Math.max(0, pa - stateIncome);
+                                            if (taxablePart > paHeadroom) {
+                                                // Reduce grossPlanned so taxablePart equals paHeadroom
+                                                // (simple approach: just set taxablePart down and adjust gross accordingly)
+                                                taxablePart = paHeadroom;
+                                                totalTaxablePension = stateIncome + taxablePart; // keep consistent
+                                            }
+                                            pclsRemaining -= taxFreePart;
+                                        }
+
+                                        totalTaxablePension += taxablePart;
+
+                                        for (const p of pensions) {
+                                            const share = p.value / pensionTotal;
+                                            p.value -= grossPlanned * share;
+                                            if (p.value < 0) p.value = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Step 2: ISA only for the rest (NO pension fallback)
+                        if (remainingGrossNeeded > 0) {
+                            const isaTotal = sumAssets(isas);
+                            const isaUse = Math.min(isaTotal, remainingGrossNeeded);
+                            takenIsa += isaUse;
+                            remainingGrossNeeded -= isaUse;
+
+                            if (isaUse > 0 && isaTotal > 0) {
+                                for (const a of isas) {
+                                    const share = a.value / isaTotal;
+                                    a.value -= isaUse * share;
+                                    if (a.value < 0) a.value = 0;
+                                }
+                            }
+                        }
+
+                        // If ISA is now empty and we still can't meet the gross target, allow pension-only fallback.
+                        // This is Phase 2 (tax will happen here).
+                        if (canUsePension && remainingGrossNeeded > 0) {
+                            if (isaTotalAtStartOfYear <= 1) {
+                                const pensionTotal = sumAssets(pensions);
+                                const grossRest = Math.min(pensionTotal, remainingGrossNeeded);
+
+                                if (grossRest > 0) {
+                                    totalGrossPension += grossRest;
+                                    remainingGrossNeeded -= grossRest;
+
+                                    // Apply any remaining 25% tax-free allowance if still available
+                                    let taxFreePart = 0;
+                                    let taxablePart = grossRest;
+
+                                    if (pclsRemaining > 0) {
+                                        const maxTaxFree = grossRest * 0.25;
+                                        taxFreePart = Math.min(maxTaxFree, pclsRemaining);
+                                        taxablePart = grossRest - taxFreePart;
+                                        pclsRemaining -= taxFreePart;
+                                    }
+
+                                    totalTaxablePension += taxablePart;
+
+                                    // Reduce pensions proportionally
+                                    if (pensionTotal > 0) {
+                                        for (const p of pensions) {
+                                            const share = p.value / pensionTotal;
+                                            p.value -= grossRest * share;
+                                            if (p.value < 0) p.value = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        takenPensionGross = totalGrossPension;
+
+                    }
+
+
+                    // 3) Tax only on taxable income portion (state pension + taxable pension)
+                    const taxTotal = computeIncomeTax(stateIncome + totalTaxablePension, country);
+                    const taxOnStateOnly = computeIncomeTax(stateIncome, country);
+                    taxPaid = Math.max(0, taxTotal - taxOnStateOnly);
+
+                    // 4) Compute delivered net cash after tax (state pension is paid gross here; tax is accounted separately)
+                    const netFromPension = Math.max(0, takenPensionGross - taxPaid);
+                    const netDelivered = stateIncome + takenIsa + netFromPension;
+
+                    // shortfall vs the gross target (as requested: target is “amount set + inflation”)
+                    // We only care if we couldn't WITHDRAW the gross target (tax is expected)
+                    shortfall = Math.max(0, remainingGrossNeeded);
+                    couldNotMeet = shortfall > 0.01;
+
+
+                    // 5) Increase target for next year
+                    spendTargetGross *= (1 + inflation);
+
+                    // push results (inside retired block so netDelivered is available)
+                    const pensionTotalNow = sumAssets(pensions);
+                    const isaTotalNow = sumAssets(isas);
+
+                    results.push({
+                        age,
+                        pensionLocked: (isRetired && pensionLocked),
+                        pensionTotal: pensionTotalNow,
+                        isaTotal: isaTotalNow,
+                        stateIncome,
+                        netSpendTarget: targetThisYear,   // keeping the existing column name; value is gross target
+                        takenIsa,
+                        takenPensionGross,
+                        taxPaid,
+                        netDelivered,
+                        shortfall,
+                        couldNotMeet
+                    });
+                } else {
+                    // Pre-retirement row (no spending)
+                    const pensionTotalNow = sumAssets(pensions);
+                    const isaTotalNow = sumAssets(isas);
+
+                    results.push({
+                        age,
+                        pensionLocked: false,
+                        pensionTotal: pensionTotalNow,
+                        isaTotal: isaTotalNow,
+                        stateIncome,
+                        netSpendTarget: 0,
+                        takenIsa: 0,
+                        takenPensionGross: 0,
+                        taxPaid: 0,
+                        netDelivered: 0,
+                        shortfall: 0,
+                        couldNotMeet: false
+                    });
+                }
+
+                // Optional early stop: if retired and both pots are empty, you can break.
+                // (If this ever causes trouble again, remove this whole block.)
+                const pensionTotalNow2 = sumAssets(pensions);
+                const isaTotalNow2 = sumAssets(isas);
+                if (isRetired && pensionTotalNow2 <= 1 && isaTotalNow2 <= 1) {
+                    break;
+                }
+            }
+
+            state.results = results;
+            saveState();
+            renderResults();
+            $("statusPill").textContent = `Ran ${results.length} year(s)`;
+        }
+
+
+        function renderResults() {
+            const tb = $("resultTable").querySelector("tbody");
+            tb.innerHTML = "";
+
+            const rows = state.results || [];
+            for (const r of rows) {
+                const tr = document.createElement("tr");
+                // Highlight pension-locked years (retired but can't access pension yet)
+                if (r.pensionLocked && (r.shortfall || 0) <= 0.01) {
+                    tr.style.background = "color-mix(in srgb, var(--warn) 12%, transparent)";
+                }
+
+                // Highlight real shortfall years (couldn't withdraw full target)
+                if (r.couldNotMeet) {
+                    tr.style.background = "color-mix(in srgb, var(--bad) 14%, transparent)";
+                }
+
+                // Highlight years where the target couldn't be met
+                if (r.couldNotMeet) {
+                    tr.style.background = "color-mix(in srgb, var(--bad) 14%, transparent)";
+                }
+
+                tr.innerHTML = `
+              <td class="mono">${
+                    r.couldNotMeet ? `⚠ ${r.age}` :
+                        (r.pensionLocked ? `🔒 ${r.age}` : r.age)
+                }</td>
+
+              <td class="right">${money0(r.pensionTotal)}</td>
+              <td class="right">${money0(r.isaTotal)}</td>
+              <td class="right">${money0(r.stateIncome)}</td>
+              <td class="right">${money0(r.netSpendTarget)}</td>
+              <td class="right">${money0(r.takenIsa)}</td>
+              <td class="right">${money0(r.takenPensionGross)}</td>
+              <td class="right">${money0(r.taxPaid)}</td>
+              <td class="right">${money0(r.netDelivered)}</td>
+<td class="right">${money0(r.shortfall)}</td>
+
+            `;
+                tb.appendChild(tr);
+            }
+
+            if (rows.length) {
+                const last = rows[rows.length - 1];
+                const retiredStart = rows.find(x => x.netSpendTarget > 0) || rows[0];
+                $("resultNote").textContent =
+                    `Projection ends at age ${last.age}. ` +
+                    `At retirement start (age ${retiredStart.age}), withdrawals begin ISA-first. ` +
+                    `Tax shown is income tax on taxable income (state pension + pension withdrawals), using built-in band defaults.`;
+            } else {
+                $("resultNote").textContent = "";
+            }
+        }
+
+        function downloadCSV() {
+            const rows = state.results || [];
+            if (!rows.length) return;
+
+            const headers = ["Age", "PensionTotal", "ISATotal", "StatePension", "NetSpendTarget", "TakenISA", "TakenPensionGross", "TaxPaid", "NetDelivered"];
+            const lines = [headers.join(",")];
+
+            for (const r of rows) {
+                const line = [
+                    r.age,
+                    Math.round(r.pensionTotal),
+                    Math.round(r.isaTotal),
+                    Math.round(r.stateIncome),
+                    Math.round(r.netSpendTarget),
+                    Math.round(r.takenIsa),
+                    Math.round(r.takenPensionGross),
+                    Math.round(r.taxPaid),
+                    Math.round(r.netDelivered)
+                ].join(",");
+                lines.push(line);
+            }
+
+            const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "financial_planner_projection.csv";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        // ---- Inputs wiring ----
+        function readInputsToState() {
+            // we persist inputs via localStorage by reading direct dom on run,
+            // but we’ll save also on change for convenience.
+            const inputIds = ["dob", "retAge", "pensionAccessAge", "spa", "statePension", "pclsCap", "stateInc", "inflation", "runOutAge", "withdrawal", "country", "takePcls", "pclsToIsa", "withdrawStrategy"];
+
+            const inputs = {};
+            for (const id of inputIds) {
+                const el = $(id);
+                if (!el) continue;
+                if (el.type === "checkbox") inputs[id] = el.checked;
+                else inputs[id] = el.value;
+            }
+            state.inputs = inputs;
+            saveState();
+            updateDerivedPills();
+        }
+
+        function applySavedInputs() {
+            if (!state.inputs) return;
+            for (const [id, val] of Object.entries(state.inputs)) {
+                const el = $(id);
+                if (!el) continue;
+                if (el.type === "checkbox") el.checked = !!val;
+                else el.value = val;
+            }
+        }
+
+        function updateDerivedPills() {
+            const ageNow = calcAge($("dob").value);
+            $("agePill").textContent = `Age: ${ageNow ?? "—"}`;
+            const retAge = Number($("retAge").value) || 0;
+            const runOutAge = Number($("runOutAge").value) || 0;
+            if (ageNow !== null && runOutAge > ageNow) {
+                $("yearsPill").textContent = `Years modelled: ${runOutAge - ageNow + 1}`;
+            } else {
+                $("yearsPill").textContent = "Years: —";
+            }
+        }
+
+        function resetAll() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        // ---- Init ----
+        (function init() {
+            loadState();
+            setTheme(state.theme || "dark");
+
+            $("todayPill").textContent = `Today: ${todayLocalISO()}`;
+
+            applySavedInputs();
+
+            // If no DOB saved, set a placeholder-ish default (empty)
+            // (leave blank intentionally)
+
+            // ensure tables exist
+            if (!Array.isArray(state.pensions)) state.pensions = [];
+            if (!Array.isArray(state.isas)) state.isas = [];
+
+            renderAssetTables();
+            attachTableHandlers();
+            updateDerivedPills();
+
+            // handlers
+            $("btnTheme").addEventListener("click", () => setTheme((state.theme === "light") ? "dark" : "light"));
+            $("btnRun").addEventListener("click", () => runProjection());
+            $("btnReset").addEventListener("click", resetAll);
+            $("btnDownloadCsv").addEventListener("click", downloadCSV);
+
+            $("addPension").addEventListener("click", () => {
+                state.pensions.push({ name: `Pension ${state.pensions.length + 1}`, value: 0, monthly: 0, growth: 5.0 });
+                renderAssetTables();
+            });
+            $("addIsa").addEventListener("click", () => {
+                state.isas.push({ name: `ISA ${state.isas.length + 1}`, value: 0, monthly: 0, growth: 5.0 });
+                renderAssetTables();
+            });
+
+            // save input changes
+            const inputIds = ["dob", "retAge", "pensionAccessAge", "spa", "statePension", "pclsCap", "stateInc", "inflation", "runOutAge", "withdrawal", "country", "takePcls", "pclsToIsa", "withdrawStrategy"];
+
+            for (const id of inputIds) {
+                const el = $(id);
+                if (!el) continue;
+                el.addEventListener("input", readInputsToState);
+                el.addEventListener("change", readInputsToState);
+            }
+            readInputsToState();
+
+            // render saved results if any
+            if (Array.isArray(state.results) && state.results.length) {
+                renderResults();
+                $("statusPill").textContent = `Loaded ${state.results.length} saved year(s)`;
+            }
+            $("btnExport").addEventListener("click", exportPlan);
+
+            $("btnImport").addEventListener("click", () => $("importFile").click());
+
+            $("importFile").addEventListener("change", (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) handleImportFile(file);
+                e.target.value = ""; // allow re-importing same file
+            });
+
+
+        })();
+
+        function exportPlan() {
+            // ensure latest inputs are persisted
+            readInputsToState();
+            const payload = {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                state
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "financial_planner_settings.json";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function importPlanFromObject(obj) {
+            if (!obj || typeof obj !== "object") throw new Error("Invalid file.");
+            const incoming = obj.state ?? obj; // allow either wrapped or raw state
+            if (!incoming || typeof incoming !== "object") throw new Error("Invalid file format.");
+
+            // minimal validation
+            if (!Array.isArray(incoming.pensions) || !Array.isArray(incoming.isas)) {
+                throw new Error("Missing pensions/isas arrays.");
+            }
+
+            // replace state safely (keep theme fallback)
+            state.theme = incoming.theme || state.theme || "dark";
+            state.pensions = incoming.pensions;
+            state.isas = incoming.isas;
+            state.inputs = incoming.inputs || state.inputs || {};
+            state.results = incoming.results || [];
+
+            saveState();
+
+            // re-apply to UI
+            setTheme(state.theme);
+            applySavedInputs();
+            renderAssetTables();
+            renderResults();
+            updateDerivedPills();
+
+            $("statusPill").textContent = "Imported settings";
+        }
+
+        function handleImportFile(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const obj = JSON.parse(String(reader.result || "{}"));
+                    importPlanFromObject(obj);
+                } catch (e) {
+                    $("statusPill").textContent = "Import failed (bad JSON)";
+                }
+            };
+            reader.readAsText(file);
+        }
+
+
+    </script>
+</body>
+</html>
