@@ -188,6 +188,7 @@
             color: var(--muted);
         }
 
+
         input[type="number"], input[type="date"], select {
             width: 100%;
             padding: 10px 10px;
@@ -203,27 +204,51 @@
                 box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
             }
 
+        /* Force checkbox groups to sit side-by-side */
         .checkrow {
-            display: flex;
+            display: flex !important;
+            flex-direction: row !important;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            padding-top: 6px;
+            justify-content: flex-start;
+            flex-wrap: wrap; /* wrap on small screens */
+            gap: 10px 12px;
         }
 
-        .check {
-            display: flex;
+        label.check {
+            display: inline-flex;
+            flex-direction: row; /* ← key fix */
             align-items: center;
             gap: 8px;
-            color: var(--text);
             font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--panel2) 70%, transparent);
+            border: 1px solid var(--border);
             user-select: none;
         }
 
-            .check input {
-                width: 16px;
-                height: 16px;
-            }
+        .checkrow > label.check {
+            width: auto !important;
+            flex: 0 0 auto !important;
+            max-width: 520px;
+            white-space: normal;
+        }
+
+
+
+        label.check:hover {
+            background: color-mix(in srgb, var(--panel2) 55%, transparent);
+        }
+
+        label.check input {
+            margin: 0;
+            width: 15px;
+            height: 15px;
+            accent-color: var(--accent);
+        }
+
 
         table {
             width: 100%;
@@ -392,9 +417,113 @@
         }
 
 
+        /* Milestone markers: a coloured bar on the Age cell */
+        #resultTable tbody tr.m-retire td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+        }
 
+        #resultTable tbody tr.m-pension-access td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--good) 70%, transparent);
+        }
 
+        #resultTable tbody tr.m-state-start td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--warn) 80%, transparent);
+        }
 
+        #resultTable tbody tr.m-isa-zero td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--bad) 70%, transparent);
+        }
+
+        #resultTable tbody tr.m-pcls-zero td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--warn) 55%, transparent);
+        }
+
+        #resultTable tbody tr.m-first-shortfall td:first-child {
+            box-shadow: inset 4px 0 0 color-mix(in srgb, var(--bad) 85%, transparent);
+        }
+
+        /* Optional: make Age text slightly bolder on those milestones */
+        #resultTable tbody tr.m-retire td:first-child,
+        #resultTable tbody tr.m-pension-access td:first-child,
+        #resultTable tbody tr.m-state-start td:first-child,
+        #resultTable tbody tr.m-isa-zero td:first-child,
+        #resultTable tbody tr.m-pcls-zero td:first-child,
+        #resultTable tbody tr.m-first-shortfall td:first-child {
+            font-weight: 900;
+        }
+
+        /* Milestone legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+            .legend .lg {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+                .legend .lg::before {
+                    content: "";
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 2px;
+                    display: inline-block;
+                }
+
+            /* Match milestone colours */
+            .legend .retire::before {
+                background: color-mix(in srgb, var(--accent) 70%, transparent);
+            }
+
+            .legend .pension::before {
+                background: color-mix(in srgb, var(--good) 70%, transparent);
+            }
+
+            .legend .state::before {
+                background: color-mix(in srgb, var(--warn) 80%, transparent);
+            }
+
+            .legend .isa::before {
+                background: color-mix(in srgb, var(--bad) 70%, transparent);
+            }
+
+            .legend .pcls::before {
+                background: color-mix(in srgb, var(--warn) 55%, transparent);
+            }
+
+            .legend .shortfall::before {
+                background: color-mix(in srgb, var(--bad) 85%, transparent);
+            }
+
+        /* Decade grouping rows */
+        .decade-row td {
+            background: color-mix(in srgb, var(--panel2) 85%, transparent);
+            font-weight: 800;
+            font-size: 12px;
+            border-top: 2px solid var(--border);
+        }
+
+        .decade-cell {
+            padding: 8px 10px;
+        }
+
+        .decade-toggle {
+            cursor: pointer;
+            margin-right: 6px;
+            font-family: var(--mono);
+            user-select: none;
+        }
+
+        /* Utility: make an item span both columns in .form-grid */
+        .span-2 {
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -417,7 +546,7 @@
             </div>
         </div>
     </header>
-    
+
     <main class="wrap">
         <div class="grid">
             <section class="card">
@@ -472,8 +601,8 @@
                         </label>
 
                         <label>
-                            Expected run out of funds by (age)
-                            <input type="number" id="runOutAge" min="55" max="110" step="1" value="85" />
+                            Run to max age
+                            <input type="number" id="runToMaxAge" min="55" max="110" step="1" value="110" />
                         </label>
 
                         <label>
@@ -497,20 +626,80 @@
                             </select>
                         </label>
 
-                        <label>
-                            Take tax-free lump sum at retirement?
+                        <div class="span-2">
+                            <div class="muted" style="font-size:12px; margin-bottom:6px;">
+                                Take tax-free lump sum at retirement?
+                            </div>
+
                             <div class="checkrow">
                                 <label class="check">
                                     <input type="checkbox" id="takePcls" checked />
                                     Yes (PCLS)
                                 </label>
+
                                 <label class="check">
                                     <input type="checkbox" id="pclsToIsa" checked />
                                     Add PCLS into ISA bucket (so it’s spent ISA-first)
                                 </label>
                             </div>
-                        </label>
+                        </div>
+
+
                     </div>
+
+                    <div class="card"></div>
+
+                    <div class="card">
+                        <div class="head">
+                            <h2>Spending phases</h2>
+                            <span class="pill">Optional</span>
+                        </div>
+                        <div class="body">
+
+                            <div class="checkrow">
+                                <label class="check">
+                                    <input type="checkbox" id="enablePhases">
+                                    Enable spending phases
+                                </label>
+                            </div>
+
+                            <div class="form-grid" style="margin-top:10px">
+                                <label>
+                                    Phase 1 ends at age
+                                    <input type="number" id="phase1EndAge" value="70" min="0" step="1">
+                                </label>
+                                <label>
+                                    Phase 1 adjustment (%)
+                                    <input type="number" id="phase1Adj" value="15" step="0.5">
+                                </label>
+                            </div>
+
+                            <div class="checkrow" style="margin-top:10px">
+                                <label class="check">
+                                    <input type="checkbox" id="enablePhase3">
+                                    Enable later-life phase
+                                </label>
+                            </div>
+
+                            <div class="form-grid" style="margin-top:10px">
+                                <label>
+                                    Phase 3 starts at age
+                                    <input type="number" id="phase3StartAge" value="80" min="0" step="1">
+                                </label>
+                                <label>
+                                    Phase 3 adjustment (%)
+                                    <input type="number" id="phase3Adj" value="10" step="0.5">
+                                </label>
+                            </div>
+
+                            <div class="note">
+                                Phases adjust your <b>net target</b> (inflation-indexed). Example: +15% means you aim to receive 15% more net.
+                            </div>
+
+                        </div>
+                    </div>
+
+
 
                     <div class="warnbox" id="taxNoteBox">
                         Tax bands are built-in defaults (can be edited in code). If you want exact “current-year” UK/Scottish bands/allowances,
@@ -602,6 +791,56 @@
                         </div>
                     </div>
 
+                    <div class="kpis">
+                        <div class="kpi">
+                            <div class="k">First shortfall age</div>
+                            <div class="v" id="kpiFirstShortfall">—</div>
+                            <div class="s" id="kpiFirstShortfallS">—</div>
+                        </div>
+
+                        <div class="kpi">
+                            <div class="k">ISA depleted age</div>
+                            <div class="v" id="kpiIsaDeplete">—</div>
+                            <div class="s" id="kpiIsaDepleteS">—</div>
+                        </div>
+
+                        <div class="kpi">
+                            <div class="k">PCLS depleted age</div>
+                            <div class="v" id="kpiPclsDeplete">—</div>
+                            <div class="s" id="kpiPclsDepleteS">—</div>
+                        </div>
+
+                        <div class="kpi">
+                            <div class="k">Total tax paid</div>
+                            <div class="v" id="kpiTotalTax">—</div>
+                            <div class="s" id="kpiTotalTaxS">—</div>
+                        </div>
+
+                        <div class="kpi">
+                            <div class="k">Total gross withdrawn</div>
+                            <div class="v" id="kpiTotalGross">—</div>
+                            <div class="s" id="kpiTotalGrossS">ISA + Pension</div>
+                        </div>
+
+                        <div class="kpi">
+                            <div class="k">Worst shortfall</div>
+                            <div class="v" id="kpiWorstShortfall">—</div>
+                            <div class="s" id="kpiWorstShortfallS">Max net gap</div>
+                        </div>
+
+                        <div class="legend">
+                            <span class="lg retire">Retirement</span>
+                            <span class="lg pension">Pension access</span>
+                            <span class="lg state">State pension</span>
+                            <span class="lg isa">ISA depleted</span>
+                            <span class="lg pcls">PCLS depleted</span>
+                            <span class="lg shortfall">First shortfall</span>
+                        </div>
+
+
+                    </div>
+
+
                     <div class="scroll">
                         <table id="resultTable">
                             <thead>
@@ -611,8 +850,8 @@
                                     <th class="right">ISA total</th>
                                     <th class="right">State pension</th>
                                     <th class="right">Net spend target</th>
-                                    <th class="right">Taken from ISA</th>
                                     <th class="right">Taken from pension (gross)</th>
+                                    <th class="right">Taken from ISA</th>
                                     <th class="right">Tax paid</th>
                                     <th class="right">Net delivered</th>
                                     <th class="right">PCLS used</th>
@@ -836,16 +1075,16 @@
         function assetRowHTML(asset, idx, type) {
             const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             return `
-            <tr data-type="${type}" data-idx="${idx}">
-              <td contenteditable="true" data-field="name">${esc(asset.name)}</td>
-              <td class="right" contenteditable="true" data-field="value">${fmt0.format(Number(asset.value) || 0)}</td>
-              <td class="right" contenteditable="true" data-field="monthly">${fmt0.format(Number(asset.monthly) || 0)}</td>
-              <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(asset.growth) || 0)}</td>
-              <td class="t-actions">
-                <button class="btn small danger" data-action="del">Del</button>
-              </td>
-            </tr>
-          `;
+                    <tr data-type="${type}" data-idx="${idx}">
+                      <td contenteditable="true" data-field="name">${esc(asset.name)}</td>
+                      <td class="right" contenteditable="true" data-field="value">${fmt0.format(Number(asset.value) || 0)}</td>
+                      <td class="right" contenteditable="true" data-field="monthly">${fmt0.format(Number(asset.monthly) || 0)}</td>
+                      <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(asset.growth) || 0)}</td>
+                      <td class="t-actions">
+                        <button class="btn small danger" data-action="del">Del</button>
+                      </td>
+                    </tr>
+                  `;
         }
 
         function renderAssetTables() {
@@ -982,6 +1221,87 @@
         }
 
 
+        function computeHeadlineKpis(results) {
+            const retiredRows = results.filter(r => (r.netSpendTarget || 0) > 0);
+
+            const firstShortfallRow = retiredRows.find(r => (r.shortfall || 0) > 0.01);
+            const firstShortfallAge = firstShortfallRow ? firstShortfallRow.age : null;
+
+            const isaDepleteRow = retiredRows.find(r => (r.isaTotal || 0) <= 1);
+            const isaDepleteAge = isaDepleteRow ? isaDepleteRow.age : null;
+
+            // “PCLS depleted” = first year where remaining hits (almost) zero
+            const pclsDepleteRow = retiredRows.find(r => (r.pclsRemainingEnd || 0) <= 0.01);
+            const pclsDepleteAge = pclsDepleteRow ? pclsDepleteRow.age : null;
+
+            const totalTax = retiredRows.reduce((sum, r) => sum + (r.taxPaid || 0), 0);
+            const totalGross = retiredRows.reduce((sum, r) => sum + (r.takenIsa || 0) + (r.takenPensionGross || 0), 0);
+
+            let worstShortfall = 0;
+            let worstShortfallAge = null;
+            for (const r of retiredRows) {
+                const s = r.shortfall || 0;
+                if (s > worstShortfall) {
+                    worstShortfall = s;
+                    worstShortfallAge = r.age;
+                }
+            }
+
+            return {
+                firstShortfallAge,
+                isaDepleteAge,
+                pclsDepleteAge,
+                totalTax,
+                totalGross,
+                worstShortfall,
+                worstShortfallAge
+            };
+        }
+
+        function renderHeadlineKpis() {
+            const results = state.results || [];
+            if (!results.length) return;
+
+            const k = computeHeadlineKpis(results);
+
+            $("kpiFirstShortfall").textContent = k.firstShortfallAge == null ? "None" : String(k.firstShortfallAge);
+            $("kpiFirstShortfallS").textContent = k.firstShortfallAge == null ? "Target met through run-out age" : "First year you miss net target";
+
+            $("kpiIsaDeplete").textContent = k.isaDepleteAge == null ? "No" : String(k.isaDepleteAge);
+            $("kpiIsaDepleteS").textContent = k.isaDepleteAge == null ? "ISA never hits £0" : "ISA reaches ~£0";
+
+            $("kpiPclsDeplete").textContent = k.pclsDepleteAge == null ? "No" : String(k.pclsDepleteAge);
+            $("kpiPclsDepleteS").textContent = k.pclsDepleteAge == null ? "25% tax-free still available" : "PCLS reaches ~£0";
+
+            $("kpiTotalTax").textContent = money0(k.totalTax);
+            $("kpiTotalTaxS").textContent = "Sum of yearly tax paid";
+
+            $("kpiTotalGross").textContent = money0(k.totalGross);
+            $("kpiTotalGrossS").textContent = "ISA + pension withdrawals";
+
+            $("kpiWorstShortfall").textContent = money0(k.worstShortfall);
+            $("kpiWorstShortfallS").textContent = k.worstShortfallAge == null ? "—" : `Worst at age ${k.worstShortfallAge}`;
+        }
+
+        function phaseMultiplierForAge(age, retAge, enablePhases, phase1EndAge, phase1AdjPct, enablePhase3, phase3StartAge, phase3AdjPct) {
+            if (!enablePhases) return 1;
+
+            // Later-life phase takes precedence if it overlaps
+            if (enablePhase3 && age >= phase3StartAge) {
+                return 1 + (phase3AdjPct / 100);
+            }
+
+            // Phase 1: from retirement up to (but not including) phase1EndAge
+            if (age >= retAge && age < phase1EndAge) {
+                return 1 + (phase1AdjPct / 100);
+            }
+
+            // Phase 2: baseline
+            return 1;
+        }
+
+
+
         // ---- Projection ----
         function runProjection() {
             //console.log("Strategy:", $("withdrawStrategy")?.value);
@@ -1004,12 +1324,20 @@
             const pclsCap = Number($("pclsCap").value) || 0;
             const stateInc = (Number($("stateInc").value) || 0) / 100;
             const inflation = (Number($("inflation").value) || 0) / 100;
-            const runOutAge = Number($("runOutAge").value) || 0;
+            const runToMaxAge = Number($("runToMaxAge").value) || 0;
             const withdraw0 = Number($("withdrawal").value) || 0;
             const country = $("country").value;
 
             const takePclsUpfront = $("takePcls").checked; // "Take tax-free lump sum at retirement?"
             const pclsToIsa = $("pclsToIsa").checked;
+
+            const enablePhases = $("enablePhases")?.checked || false;
+            const phase1EndAge = Number($("phase1EndAge")?.value) || 70;
+            const phase1Adj = Number($("phase1Adj")?.value) || 15;
+
+            const enablePhase3 = $("enablePhase3")?.checked || false;
+            const phase3StartAge = Number($("phase3StartAge")?.value) || 80;
+            const phase3Adj = Number($("phase3Adj")?.value) || 10;
 
             $("kpiSpend").textContent = money0(withdraw0);
             $("kpiSpendS").textContent = `Indexed by inflation (${(inflation * 100).toFixed(1)}%)`;
@@ -1018,12 +1346,12 @@
                 $("statusPill").textContent = "Retirement age must be > current age";
                 return;
             }
-            if (runOutAge <= ageNow) {
-                $("statusPill").textContent = "Run-out age must be > current age";
+            if (runToMaxAge <= ageNow) {
+                $("statusPill").textContent = "Run-to-max-age must be > current age";
                 return;
             }
-            if (pensionAccessAge > runOutAge) {
-                $("statusPill").textContent = "Pension access age must be <= run-out age";
+            if (pensionAccessAge > runToMaxAge) {
+                $("statusPill").textContent = "Pension access age must be <= run-to-max-age age";
                 return;
             }
 
@@ -1037,6 +1365,8 @@
 
             // Net spend target (what the user wants to RECEIVE after tax)
             let spendTargetNet = withdraw0;
+            let phaseFactor = 1;
+
 
             // PCLS handling
             // - If takePclsUpfront: we take a one-off lump sum at retirement and set remaining to 0
@@ -1044,7 +1374,7 @@
             let pclsRemaining = takePclsUpfront ? 0 : pclsCap;
             let upfrontPclsDone = false;
 
-            for (let age = ageNow; age <= runOutAge; age++) {
+            for (let age = ageNow; age <= runToMaxAge; age++) {
                 const isRetired = age >= retAge;
 
                 // Contributions stop at retirement
@@ -1108,15 +1438,28 @@
                 let shortfall = 0;
                 let couldNotMeet = false;
 
-                // We'll store "this year's target" before we inflate for next year
-                const targetThisYear = isRetired ? spendTargetNet : 0;
-
                 if (isRetired) {
+                    // Base net target for this year (before phases)
+                    const baseTargetThisYear = spendTargetNet;
+
+                    // Apply step-changes exactly once when we hit those ages
+                    if (enablePhases) {
+                        if (age === phase1EndAge) {
+                            phaseFactor *= (1 + (phase1Adj / 100));   // e.g. -15% at 70
+                        }
+                        if (enablePhase3 && age === phase3StartAge) {
+                            phaseFactor *= (1 + (phase3Adj / 100));   // e.g. +10% at 80
+                        }
+                    }
+
+                    // Effective net target for this year (after any step change)
+                    const targetThisYear = spendTargetNet * phaseFactor;
+
+                    // Net target after state pension
+                    let remainingNetNeeded = Math.max(0, targetThisYear - stateIncome);
+
                     const canUsePension = age >= pensionAccessAge;
                     const pensionLocked = !canUsePension;
-
-                    // Net target for this year (what the user wants to RECEIVE)
-                    let remainingNetNeeded = Math.max(0, spendTargetNet - stateIncome);
                     const isaTotalAtStartOfYear = sumAssets(isas);
 
 
@@ -1126,9 +1469,9 @@
                     // We’ll track taxable pension separately (because 25% can be tax-free)
                     let totalTaxablePension = 0;
                     let totalGrossPension = 0;
-                    
+
                     if (withdrawStrategy === "isaFirst") {
-                    
+
                         // --- ISA FIRST ---
                         const isaTotal = sumAssets(isas);
                         const isaUse = Math.min(isaTotal, remainingNetNeeded);
@@ -1186,7 +1529,7 @@
 
 
                     } else if (withdrawStrategy === "taxEfficient") {
-                    
+
                         // --- TAX EFFICIENT ---
                         // 1) Use pension to fill remaining personal allowance (taxable part up to PA)
                         // 2) Top up rest from ISA
@@ -1529,8 +1872,22 @@
             state.results = results;
             saveState();
             renderResults();
+            renderHeadlineKpis();
             $("statusPill").textContent = `Ran ${results.length} year(s)`;
         }
+
+
+        document.addEventListener("click", (e) => {
+            const toggle = e.target.closest(".decade-toggle");
+            if (!toggle) return;
+
+            const decade = toggle.dataset.decade;
+            const rows = document.querySelectorAll(`#resultTable tbody tr[data-decade="${decade}"]`);
+            const collapsed = toggle.textContent === "▶";
+
+            rows.forEach(r => r.style.display = collapsed ? "" : "none");
+            toggle.textContent = collapsed ? "▼" : "▶";
+        });
 
 
         function renderResults() {
@@ -1538,8 +1895,57 @@
             tb.innerHTML = "";
 
             const rows = state.results || [];
+
+            const retAge = Number($("retAge").value) || 0;
+            const pensionAccessAge = Number($("pensionAccessAge").value) || 57;
+            const spa = Number($("spa").value) || 0;
+
+            let prevIsaTotal = null;
+            let prevPclsLeft = null;
+            let prevCouldNotMeet = false;
+
+            let currentDecade = null;
+            let decadeGroup = null;
+
             for (const r of rows) {
                 const tr = document.createElement("tr");
+
+                const decade = Math.floor(r.age / 10) * 10;
+                tr.dataset.decade = decade;
+                if (decade !== currentDecade) {
+                    currentDecade = decade;
+
+                    const dtr = document.createElement("tr");
+                    dtr.className = "decade-row";
+                    dtr.innerHTML = `
+                            <td colspan="13" class="decade-cell">
+                              <span class="decade-toggle" data-decade="${decade}">▼</span>
+                              Ages ${decade}–${decade + 9}
+                            </td>
+                          `;
+                    tb.appendChild(dtr);
+                }
+
+
+                // Milestone markers (tag the row)
+                if (r.age === retAge) tr.classList.add("m-retire");
+                if (r.age === pensionAccessAge) tr.classList.add("m-pension-access");
+                if (r.age === spa) tr.classList.add("m-state-start");
+
+                // ISA hits ~zero (first time only)
+                if (prevIsaTotal !== null && prevIsaTotal > 1 && (r.isaTotal || 0) <= 1) {
+                    tr.classList.add("m-isa-zero");
+                }
+
+                // PCLS hits ~zero (first time only)
+                if (prevPclsLeft !== null && prevPclsLeft > 0.01 && (r.pclsRemainingEnd || 0) <= 0.01) {
+                    tr.classList.add("m-pcls-zero");
+                }
+
+                // First shortfall year (first time only)
+                if (!prevCouldNotMeet && (r.couldNotMeet === true)) {
+                    tr.classList.add("m-first-shortfall");
+                }
 
                 // Highlight the year PCLS runs out
                 if ((r.pclsRemainingEnd || 0) <= 0.01 && (r.pclsUsedThisYear || 0) > 0.01) {
@@ -1557,32 +1963,31 @@
                     tr.style.background = "color-mix(in srgb, var(--bad) 14%, transparent)";
                 }
 
-                // Highlight years where the target couldn't be met
-                if (r.couldNotMeet) {
-                    tr.style.background = "color-mix(in srgb, var(--bad) 14%, transparent)";
-                }
-
                 tr.innerHTML = `
-              <td class="mono">${
-                    r.couldNotMeet ? `⚠ ${r.age}` :
+                      <td class="mono">${r.couldNotMeet ? `⚠ ${r.age}` :
                         (r.pensionLocked ? `🔒 ${r.age}` : r.age)
-                }</td>
+                    }</td>
 
-              <td class="right">${money0(r.pensionTotal)}</td>
-              <td class="right">${money0(r.isaTotal)}</td>
-              <td class="right">${money0(r.stateIncome)}</td>
-              <td class="right">${money0(r.netSpendTarget)}</td>
-              <td class="right">${money0(r.takenPensionGross)}</td>
-              <td class="right">${money0(r.takenIsa)}</td>
-              <td class="right">${money0(r.taxPaid)}</td>
-              <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
-              <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
-                <td class="right">${money0(r.pclsRemainingEnd || 0)}</td>
-                <td class="right">${money0(r.pclsTaxSavedThisYear || 0)}</td>
+                      <td class="right">${money0(r.pensionTotal)}</td>
+                      <td class="right">${money0(r.isaTotal)}</td>
+                      <td class="right">${money0(r.stateIncome)}</td>
+                      <td class="right">${money0(r.netSpendTarget)}</td>
+                      <td class="right">${money0(r.takenPensionGross)}</td>
+                      <td class="right">${money0(r.takenIsa)}</td>
+                      <td class="right">${money0(r.taxPaid)}</td>
+                      <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
+                      <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
+                        <td class="right">${money0(r.pclsRemainingEnd || 0)}</td>
+                        <td class="right">${money0(r.pclsTaxSavedThisYear || 0)}</td>
 
-                <td class="right">${money0(r.shortfall)}</td>
+                        <td class="right">${money0(r.shortfall)}</td>
 
-            `;
+                    `;
+
+                prevIsaTotal = (r.isaTotal || 0);
+                prevPclsLeft = (r.pclsRemainingEnd || 0);
+                prevCouldNotMeet = (r.couldNotMeet === true);
+
                 tb.appendChild(tr);
             }
 
@@ -1639,7 +2044,16 @@
         function readInputsToState() {
             // we persist inputs via localStorage by reading direct dom on run,
             // but we’ll save also on change for convenience.
-            const inputIds = ["dob", "retAge", "pensionAccessAge", "spa", "statePension", "pclsCap", "stateInc", "inflation", "runOutAge", "withdrawal", "country", "takePcls", "pclsToIsa", "withdrawStrategy"];
+            const inputIds = [
+                "dob", "retAge", "pensionAccessAge", "spa", "statePension",
+                "pclsCap", "stateInc", "inflation", "runToMaxAge", "withdrawal",
+                "country", "takePcls", "pclsToIsa", "withdrawStrategy",
+
+                // Spending phases
+                "enablePhases", "phase1EndAge", "phase1Adj",
+                "enablePhase3", "phase3StartAge", "phase3Adj"
+            ];
+
 
             const inputs = {};
             for (const id of inputIds) {
@@ -1667,9 +2081,9 @@
             const ageNow = calcAge($("dob").value);
             $("agePill").textContent = `Age: ${ageNow ?? "—"}`;
             const retAge = Number($("retAge").value) || 0;
-            const runOutAge = Number($("runOutAge").value) || 0;
-            if (ageNow !== null && runOutAge > ageNow) {
-                $("yearsPill").textContent = `Years modelled: ${runOutAge - ageNow + 1}`;
+            const runToMaxAge = Number($("runToMaxAge").value) || 0;
+            if (ageNow !== null && runToMaxAge > ageNow) {
+                $("yearsPill").textContent = `Years modelled: ${runToMaxAge - ageNow + 1}`;
             } else {
                 $("yearsPill").textContent = "Years: —";
             }
@@ -1716,7 +2130,7 @@
             });
 
             // save input changes
-            const inputIds = ["dob", "retAge", "pensionAccessAge", "spa", "statePension", "pclsCap", "stateInc", "inflation", "runOutAge", "withdrawal", "country", "takePcls", "pclsToIsa", "withdrawStrategy"];
+            const inputIds = ["dob", "retAge", "pensionAccessAge", "spa", "statePension", "pclsCap", "stateInc", "inflation", "runToMaxAge", "withdrawal", "country", "takePcls", "pclsToIsa", "withdrawStrategy"];
 
             for (const id of inputIds) {
                 const el = $(id);
