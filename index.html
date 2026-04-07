@@ -866,6 +866,127 @@
             font-weight: 700;
         }
 
+
+        .chart-deck {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 12px 0;
+        }
+
+        .chart-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--panel2) 55%, transparent);
+            overflow: hidden;
+        }
+
+        .chart-card.is-collapsed .chart-card-body {
+            display: none;
+        }
+
+        .chart-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            background: color-mix(in srgb, var(--panel2) 78%, transparent);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-card.is-collapsed .chart-card-head {
+            border-bottom: none;
+        }
+
+        .chart-card-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .chart-card-title strong {
+            font-size: 13px;
+            letter-spacing: .15px;
+        }
+
+        .chart-card-body {
+            padding: 12px 14px 14px 14px;
+        }
+
+        .chart-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .chart-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-legend span::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .chart-legend .total::before {
+            background: color-mix(in srgb, var(--accent) 90%, white 10%);
+        }
+
+        .chart-legend .pension::before {
+            background: color-mix(in srgb, var(--good) 78%, white 8%);
+        }
+
+        .chart-legend .isa::before {
+            background: color-mix(in srgb, var(--warn) 88%, white 6%);
+        }
+
+        .chart-frame {
+            width: 100%;
+            min-height: 320px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--panel) 92%, transparent);
+            overflow: hidden;
+        }
+
+        .chart-frame svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .chart-empty {
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .chart-toggle {
+            min-width: 96px;
+            text-align: center;
+        }
+
     </style>
 </head>
 <body>
@@ -980,6 +1101,31 @@
                         <span class="lg shortfall">First shortfall</span>
                         <span class="lg life">Life expectancy</span>
                     </div>
+                </div>
+
+                <div class="chart-deck" id="chartDeck">
+                    <section class="chart-card" data-chart-card="portfolioHistory">
+                        <div class="chart-card-head">
+                            <div class="chart-card-title">
+                                <strong>Charts</strong>
+                                <span class="muted" style="font-size:12px;">Expandable space for current and future portfolio visuals.</span>
+                            </div>
+                            <button class="btn small secondary chart-toggle" id="btnTogglePortfolioChart">Hide</button>
+                        </div>
+                        <div class="chart-card-body" id="portfolioChartBody">
+                            <div class="chart-meta">
+                                <div class="chart-legend">
+                                    <span class="total">Total portfolio</span>
+                                    <span class="pension">Pensions</span>
+                                    <span class="isa">ISAs</span>
+                                </div>
+                                <span class="pill" id="portfolioChartSummary">Waiting for projection</span>
+                            </div>
+                            <div class="chart-frame" id="portfolioChartFrame">
+                                <div class="chart-empty">Run a projection to view how your pension, ISA, and total portfolio change over time.</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
                 <div class="scroll">
@@ -1432,7 +1578,12 @@
                 }
             ],
             contributionChanges: [],
-            results: []
+            results: [],
+            ui: {
+                charts: {
+                    portfolioHistoryCollapsed: false
+                }
+            }
         };
 
         // ---- Persistence ----
@@ -1496,6 +1647,15 @@
             }));
         }
 
+        function normaliseUiState(ui) {
+            const collapsed = !!(ui?.charts?.portfolioHistoryCollapsed);
+            return {
+                charts: {
+                    portfolioHistoryCollapsed: collapsed
+                }
+            };
+        }
+
 
         function todayLocalISO() {
             const d = new Date();
@@ -1515,6 +1675,39 @@
             return age;
         }
 
+        function getAgeDate(dobISO, targetAge) {
+            if (!dobISO && dobISO !== 0) return null;
+            const dob = new Date(dobISO);
+            if (Number.isNaN(dob.getTime())) return null;
+            return new Date(dob.getFullYear() + targetAge, dob.getMonth(), dob.getDate());
+        }
+
+        function yearsBetweenDates(startDate, endDate) {
+            const msPerYear = 365.2425 * 24 * 60 * 60 * 1000;
+            return Math.max(0, (endDate.getTime() - startDate.getTime()) / msPerYear);
+        }
+
+        function getProjectionTiming(dobISO) {
+            const ageNow = calcAge(dobISO);
+            if (ageNow === null) return null;
+
+            const now = new Date();
+            const nextBirthday = getAgeDate(dobISO, ageNow + 1);
+            const firstPeriodYears = nextBirthday ? yearsBetweenDates(now, nextBirthday) : 1;
+            const exactAgeNow = ageNow + Math.max(0, 1 - firstPeriodYears);
+
+            return {
+                ageNow,
+                exactAgeNow,
+                firstPeriodYears: Math.max(0.0001, firstPeriodYears),
+                yearsUntilAge(targetAge) {
+                    const targetDate = getAgeDate(dobISO, targetAge);
+                    if (!targetDate) return 0;
+                    return yearsBetweenDates(now, targetDate);
+                }
+            };
+        }
+
         function sumAssets(list) {
             return list.reduce((a, x) => a + (Number(x.value) || 0), 0);
         }
@@ -1523,11 +1716,16 @@
             return list.reduce((a, x) => a + (Number(x.monthly) || 0) * 12, 0);
         }
 
-        function applyGrowth(list) {
+        function applyGrowthFractional(list, years = 1) {
+            const safeYears = Math.max(0, Number(years) || 0);
             for (const a of list) {
                 const g = (Number(a.growth) || 0) / 100;
-                a.value = (Number(a.value) || 0) * (1 + g);
+                a.value = (Number(a.value) || 0) * Math.pow(1 + g, safeYears);
             }
+        }
+
+        function applyGrowth(list) {
+            applyGrowthFractional(list, 1);
         }
 
         function requestedAnnualContribution(list) {
@@ -1538,24 +1736,34 @@
             return Math.max(0, Math.min(Math.max(0, requested), Math.max(0, annualCap)));
         }
 
-        function applyContrib(list, annualCap = Infinity) {
-            const requested = requestedAnnualContribution(list);
-            const allowed = cappedAnnualContribution(requested, annualCap);
+        function applyContribFractional(list, years = 1, annualCap = Infinity) {
+            const safeYears = Math.max(0, Number(years) || 0);
+            const requested = requestedAnnualContribution(list) * safeYears;
+            const allowed = cappedAnnualContribution(requested, annualCap * safeYears);
             if (requested <= 0 || allowed <= 0) return { requested, allowed, capped: requested > allowed };
 
             const ratio = requested > 0 ? (allowed / requested) : 0;
             for (const a of list) {
-                const annual = Math.max(0, (Number(a.monthly) || 0) * 12);
+                const annual = Math.max(0, (Number(a.monthly) || 0) * 12) * safeYears;
                 a.value = (Number(a.value) || 0) + annual * ratio;
             }
             return { requested, allowed, capped: requested > allowed + 0.01 };
         }
 
-        function applyContributionGrowth(list) {
+        function applyContrib(list, annualCap = Infinity) {
+            return applyContribFractional(list, 1, annualCap);
+        }
+
+        function applyContributionGrowthFractional(list, years = 1) {
+            const safeYears = Math.max(0, Number(years) || 0);
             for (const a of list) {
                 const g = (Number(a.addGrowth) || 0) / 100;
-                a.monthly = Math.max(0, (Number(a.monthly) || 0) * (1 + g));
+                a.monthly = Math.max(0, (Number(a.monthly) || 0) * Math.pow(1 + g, safeYears));
             }
+        }
+
+        function applyContributionGrowth(list) {
+            applyContributionGrowthFractional(list, 1);
         }
 
         function applyContributionChangesForAge(age, list, changes, type) {
@@ -1861,18 +2069,22 @@
 
 
 
-        function computeAssetsAtRetirement(ageNow, retAge) {
+        function computeAssetsAtRetirement(dobISO, ageNow, retAge) {
+            const timing = getProjectionTiming(dobISO);
+            const firstPeriodYears = timing?.firstPeriodYears || 1;
             const pensions = shallowCloneAssets(state.pensions);
             const isas = shallowCloneAssets(state.isas);
 
-            for (let age = ageNow; age <= retAge; age++) {
-                const isRetired = age >= retAge;
-                if (!isRetired) {
-                    applyContrib(pensions, CONTRIBUTION_LIMITS.pensionAnnual);
-                    applyContrib(isas, CONTRIBUTION_LIMITS.isaAnnual);
-                }
-                applyGrowth(pensions);
-                applyGrowth(isas);
+            for (let age = ageNow; age < retAge; age++) {
+                const periodYears = age === ageNow ? firstPeriodYears : 1;
+                applyContributionChangesForAge(age, pensions, state.contributionChanges, "pension");
+                applyContributionChangesForAge(age, isas, state.contributionChanges, "isa");
+                applyContribFractional(pensions, periodYears, CONTRIBUTION_LIMITS.pensionAnnual);
+                applyContribFractional(isas, periodYears, CONTRIBUTION_LIMITS.isaAnnual);
+                applyContributionGrowthFractional(pensions, periodYears);
+                applyContributionGrowthFractional(isas, periodYears);
+                applyGrowthFractional(pensions, periodYears);
+                applyGrowthFractional(isas, periodYears);
             }
 
             return {
@@ -1981,6 +2193,111 @@
             }
         }
 
+
+        function setChartCollapsed(chartKey, collapsed) {
+            state.ui = normaliseUiState(state.ui);
+            if (chartKey === "portfolioHistory") {
+                state.ui.charts.portfolioHistoryCollapsed = !!collapsed;
+            }
+            saveState();
+            renderChartCards();
+        }
+
+        function renderChartCards() {
+            state.ui = normaliseUiState(state.ui);
+            const card = document.querySelector('[data-chart-card="portfolioHistory"]');
+            const btn = $("btnTogglePortfolioChart");
+            if (!card || !btn) return;
+
+            const collapsed = !!state.ui.charts.portfolioHistoryCollapsed;
+            card.classList.toggle("is-collapsed", collapsed);
+            btn.textContent = collapsed ? "Show" : "Hide";
+            btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
+
+        function buildLinePath(points, xScale, yScale) {
+            return points.map((point, idx) => {
+                const x = xScale(point.age).toFixed(2);
+                const y = yScale(point.value).toFixed(2);
+                return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+            }).join(" ");
+        }
+
+        function renderPortfolioChart() {
+            const frame = $("portfolioChartFrame");
+            const summary = $("portfolioChartSummary");
+            if (!frame || !summary) return;
+
+            const rows = (state.results || []).map(row => ({
+                age: Number(row.chartAge ?? row.age) || 0,
+                ageLabel: String(row.ageLabel ?? row.age ?? ""),
+                pension: Number(row.pensionTotal) || 0,
+                isa: Number(row.isaTotal) || 0,
+                total: (Number(row.pensionTotal) || 0) + (Number(row.isaTotal) || 0)
+            }));
+
+            if (!rows.length) {
+                summary.textContent = "Waiting for projection";
+                frame.innerHTML = `<div class="chart-empty">Run a projection to view how your pension, ISA, and total portfolio change over time.</div>`;
+                return;
+            }
+
+            const w = 980;
+            const h = 340;
+            const pad = { top: 18, right: 18, bottom: 38, left: 68 };
+            const innerW = w - pad.left - pad.right;
+            const innerH = h - pad.top - pad.bottom;
+            const minAge = rows[0].age;
+            const maxAge = rows[rows.length - 1].age;
+            const maxValue = Math.max(1, ...rows.flatMap(r => [r.pension, r.isa, r.total]));
+
+            const xScale = (age) => pad.left + (((age - minAge) / Math.max(1, maxAge - minAge)) * innerW);
+            const yScale = (value) => pad.top + innerH - ((value / maxValue) * innerH);
+
+            const tickCount = Math.min(6, rows.length);
+            const yTicks = Array.from({ length: 5 }, (_, idx) => (maxValue / 4) * idx).reverse();
+            const xTicks = Array.from({ length: tickCount }, (_, idx) => {
+                if (tickCount === 1) return minAge;
+                return Math.round(minAge + ((maxAge - minAge) * idx / (tickCount - 1)));
+            });
+
+            const series = {
+                total: rows.map(r => ({ age: r.age, value: r.total })),
+                pension: rows.map(r => ({ age: r.age, value: r.pension })),
+                isa: rows.map(r => ({ age: r.age, value: r.isa }))
+            };
+
+            const totalStart = rows[0].total;
+            const totalEnd = rows[rows.length - 1].total;
+            const startLabel = rows[0].ageLabel || `Age ${fmt2.format(minAge)}`;
+            const endLabel = rows[rows.length - 1].ageLabel || `Age ${fmt0.format(maxAge)}`;
+            summary.textContent = `${money0(totalStart)} → ${money0(totalEnd)} from ${startLabel} to ${endLabel}`;
+
+            const svg = `
+                <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Portfolio chart showing total portfolio, pensions and ISAs over time">
+                    <rect x="0" y="0" width="${w}" height="${h}" fill="transparent"></rect>
+                    ${yTicks.map(value => `
+                        <g>
+                            <line x1="${pad.left}" y1="${yScale(value)}" x2="${w - pad.right}" y2="${yScale(value)}" stroke="var(--border)" stroke-width="1"></line>
+                            <text x="${pad.left - 10}" y="${yScale(value) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${money0(value)}</text>
+                        </g>
+                    `).join("")}
+                    ${xTicks.map(age => `
+                        <g>
+                            <line x1="${xScale(age)}" y1="${pad.top}" x2="${xScale(age)}" y2="${h - pad.bottom}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 5"></line>
+                            <text x="${xScale(age)}" y="${h - 12}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">${Number.isInteger(age) ? age : age.toFixed(1)}</text>
+                        </g>
+                    `).join("")}
+                    <path d="${buildLinePath(series.total, xScale, yScale)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>
+                    <path d="${buildLinePath(series.pension, xScale, yScale)}" fill="none" stroke="var(--good)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+                    <path d="${buildLinePath(series.isa, xScale, yScale)}" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+                </svg>
+            `;
+
+            frame.innerHTML = svg;
+        }
+
+
         function phaseMultiplierForAge(age, retAge, enablePhases, phase1EndAge, phase1AdjPct, enablePhase3, phase3StartAge, phase3AdjPct) {
             if (!enablePhases) return 1;
 
@@ -2006,7 +2323,8 @@
 
 
             const dob = $("dob").value;
-            const ageNow = calcAge(dob);
+            const timing = getProjectionTiming(dob);
+            const ageNow = timing?.ageNow ?? null;
             const withdrawStrategy = $("withdrawStrategy").value || "isaFirst";
 
             if (ageNow === null) {
@@ -2039,7 +2357,7 @@
             const phase3StartAge = Number($("phase3StartAge")?.value) || 80;
             const phase3Adj = Number($("phase3Adj")?.value) || 10;
 
-            const yearsToRetirement = Math.max(0, retAge - ageNow);
+            const yearsToRetirement = Math.max(0, timing?.yearsUntilAge(retAge) ?? (retAge - ageNow));
             const firstRetirementSpendTarget = inflateSpendFromToday
                 ? withdraw0 * Math.pow(1 + inflation, yearsToRetirement)
                 : withdraw0;
@@ -2049,7 +2367,7 @@
                 ? `In today's money; inflated to retirement, then by ${(inflation * 100).toFixed(1)}% yearly`
                 : `Starts at retirement, then indexed by inflation (${(inflation * 100).toFixed(1)}%)`;
 
-            const retirementTotals = computeAssetsAtRetirement(ageNow, retAge);
+            const retirementTotals = computeAssetsAtRetirement(dob, ageNow, retAge);
             $("kpiPensionAtRet").textContent = money0(retirementTotals.pensionTotal);
             $("kpiIsaAtRet").textContent = money0(retirementTotals.isaTotal);
             $("kpiPensionAtRetS").textContent = `Projected at age ${retAge}`;
@@ -2075,10 +2393,11 @@
             const results = [];
 
             let statePensionYearly = statePension0;
+            const firstPeriodYears = timing?.firstPeriodYears || 1;
 
             // Net spend target (what the user wants to RECEIVE after tax)
             let spendTargetNet = inflateSpendFromToday
-                ? withdraw0 * Math.pow(1 + inflation, Math.max(0, retAge - ageNow))
+                ? withdraw0 * Math.pow(1 + inflation, yearsToRetirement)
                 : withdraw0;
             let phaseFactor = 1;
 
@@ -2089,22 +2408,46 @@
             let pclsRemaining = takePclsUpfront ? 0 : pclsCap;
             let upfrontPclsDone = false;
 
-            for (let age = ageNow; age <= runToMaxAge; age++) {
+            results.push({
+                age: ageNow,
+                ageLabel: `Today (${ageNow})`,
+                chartAge: timing?.exactAgeNow ?? ageNow,
+                isToday: true,
+                pensionLocked: false,
+                pensionTotal: sumAssets(pensions),
+                isaTotal: sumAssets(isas),
+                stateIncome: 0,
+                netSpendTarget: 0,
+                takenPensionGross: 0,
+                takenIsa: 0,
+                taxPaid: 0,
+                netDelivered: 0,
+                pclsUsedThisYear: 0,
+                pclsRemainingEnd: pclsRemaining,
+                pclsTaxSavedThisYear: 0,
+                shortfall: 0,
+                couldNotMeet: false,
+                isLifeExpectancy: ageNow === lifeExpectancy
+            });
+
+            for (let age = ageNow; age < runToMaxAge; age++) {
+                const displayAge = age + 1;
+                const periodYears = age === ageNow ? firstPeriodYears : 1;
                 const isRetired = age >= retAge;
 
                 // Contributions stop at retirement
                 if (!isRetired) {
                     applyContributionChangesForAge(age, pensions, state.contributionChanges, "pension");
                     applyContributionChangesForAge(age, isas, state.contributionChanges, "isa");
-                    applyContrib(pensions, CONTRIBUTION_LIMITS.pensionAnnual);
-                    applyContrib(isas, CONTRIBUTION_LIMITS.isaAnnual);
-                    applyContributionGrowth(pensions);
-                    applyContributionGrowth(isas);
+                    applyContribFractional(pensions, periodYears, CONTRIBUTION_LIMITS.pensionAnnual);
+                    applyContribFractional(isas, periodYears, CONTRIBUTION_LIMITS.isaAnnual);
+                    applyContributionGrowthFractional(pensions, periodYears);
+                    applyContributionGrowthFractional(isas, periodYears);
                 }
 
-                // Growth applies every year
-                applyGrowth(pensions);
-                applyGrowth(isas);
+                // Growth applies every period
+                applyGrowthFractional(pensions, periodYears);
+                applyGrowthFractional(isas, periodYears);
 
                 // One-off PCLS at the first retirement year if selected
                 if (isRetired && !upfrontPclsDone && takePclsUpfront) {
@@ -2141,10 +2484,10 @@
                 // increasing it each year thereafter.
                 let stateIncome = 0;
                 if (age < spa) {
-                    statePensionYearly *= (1 + stateInc);
+                    statePensionYearly *= Math.pow(1 + stateInc, periodYears);
                 } else {
                     stateIncome = statePensionYearly;
-                    statePensionYearly *= (1 + stateInc);
+                    statePensionYearly *= Math.pow(1 + stateInc, periodYears);
                 }
 
                 // Drawdown fields
@@ -2540,7 +2883,10 @@
                     const isaTotalNow = sumAssets(isas);
 
                     results.push({
-                        age,
+                        age: displayAge,
+                        ageLabel: String(displayAge),
+                        chartAge: displayAge,
+                        isToday: false,
                         pensionLocked: (isRetired && pensionLocked),
                         pensionTotal: pensionTotalNow,
                         isaTotal: isaTotalNow,
@@ -2555,7 +2901,7 @@
                         pclsTaxSavedThisYear,
                         shortfall,
                         couldNotMeet,
-                        isLifeExpectancy: age === lifeExpectancy
+                        isLifeExpectancy: displayAge === lifeExpectancy
                     });
 
                     // 5) Increase target for next year
@@ -2568,7 +2914,10 @@
                     const isaTotalNow = sumAssets(isas);
 
                     results.push({
-                        age,
+                        age: displayAge,
+                        ageLabel: String(displayAge),
+                        chartAge: displayAge,
+                        isToday: false,
                         pensionLocked: false,
                         pensionTotal: pensionTotalNow,
                         isaTotal: isaTotalNow,
@@ -2583,7 +2932,7 @@
                         pclsTaxSavedThisYear: 0,
                         shortfall: 0,
                         couldNotMeet: false,
-                        isLifeExpectancy: age === lifeExpectancy
+                        isLifeExpectancy: displayAge === lifeExpectancy
                     });
                 }
 
@@ -2600,6 +2949,7 @@
             saveState();
             renderResults();
             renderHeadlineKpis();
+            renderPortfolioChart();
             $("statusPill").textContent = `Ran ${results.length} year(s)`;
         }
 
@@ -2638,7 +2988,7 @@
             for (const r of rows) {
                 const tr = document.createElement("tr");
 
-                const decade = Math.floor(r.age / 10) * 10;
+                const decade = Math.floor((Number(r.age) || 0) / 10) * 10;
                 tr.dataset.decade = decade;
                 if (decade !== currentDecade) {
                     currentDecade = decade;
@@ -2656,7 +3006,7 @@
 
 
                 // Milestone markers (tag the row)
-                if (r.age === retAge) tr.classList.add("m-retire");
+                if (!r.isToday && r.age === retAge) tr.classList.add("m-retire");
                 if (r.age === pensionAccessAge) tr.classList.add("m-pension-access");
                 if (r.age === spa) tr.classList.add("m-state-start");
 
@@ -2696,11 +3046,14 @@
                     tr.style.background = "color-mix(in srgb, var(--warn) 12%, transparent)";
                 }
 
+                const ageText = r.isToday
+                    ? `● ${r.ageLabel || `Today (${r.age})`}`
+                    : (r.couldNotMeet ? `⚠ ${r.ageLabel || r.age}` :
+                        (r.pensionLocked ? `🔒 ${r.ageLabel || r.age}` :
+                            ((r.age === lifeExpectancy || r.isLifeExpectancy) ? `★ ${r.ageLabel || r.age}` : (r.ageLabel || r.age))));
+
                 tr.innerHTML = `
-                      <td class="mono">${r.couldNotMeet ? `⚠ ${r.age}` :
-                        (r.pensionLocked ? `🔒 ${r.age}` :
-                            ((r.age === lifeExpectancy || r.isLifeExpectancy) ? `★ ${r.age}` : r.age))
-                    }</td>
+                      <td class="mono">${ageText}</td>
 
                       <td class="right">${money0(r.pensionTotal)}</td>
                       <td class="right">${money0(r.isaTotal)}</td>
@@ -2737,8 +3090,10 @@
                         : `Life expectancy row is highlighted at age ${lifeExpectancy}, and the plan still meets the target by then. `);
 
                 $("resultNote").textContent =
+                    `The first row shows today, and later rows are birthday snapshots after the period leading up to that age. ` +
                     `Projection ends at age ${last.age}. ` +
-                    `At retirement start (age ${retiredStart.age}), withdrawals begin ${$("withdrawStrategy").value === "isaFirst" ? "ISA-first" : "using the selected withdrawal strategy"}. ` +
+                    `At retirement start (age ${Number($("retAge").value) || 0}), withdrawals begin ${$("withdrawStrategy").value === "isaFirst" ? "ISA-first" : "using the selected withdrawal strategy"}. ` +
+                    `The first future step is prorated for the time left until your next birthday. ` +
                     lifeExpectancySummary +
                     `Tax shown is income tax on taxable income (state pension + pension withdrawals), using built-in band defaults.`;
             } else {
@@ -3139,6 +3494,7 @@
             state.isas = normaliseAssets(state.isas, "isa");
             state.contributionChanges = normaliseContributionChanges(state.contributionChanges);
             state.spendingPlan = normaliseSpendingPlan(state.spendingPlan);
+            state.ui = normaliseUiState(state.ui);
 
             renderAssetTables();
             attachTableHandlers();
@@ -3172,6 +3528,7 @@
             $("btnOpenContributionChanges").addEventListener("click", openContributionChangesModal);
             $("btnCloseContributionChanges").addEventListener("click", closeContributionChangesModal);
             $("btnAddContributionChange").addEventListener("click", addContributionChange);
+            $("btnTogglePortfolioChart").addEventListener("click", () => setChartCollapsed("portfolioHistory", !state.ui?.charts?.portfolioHistoryCollapsed));
             document.addEventListener("keydown", (e) => {
                 if (e.key === "Escape" && $("contributionChangesModal").classList.contains("open")) {
                     closeContributionChangesModal();
@@ -3203,10 +3560,14 @@
                 el.addEventListener("change", readInputsToState);
             }
             readInputsToState();
+            renderChartCards();
+            renderPortfolioChart();
 
             // render saved results if any
             if (Array.isArray(state.results) && state.results.length) {
                 renderResults();
+                renderHeadlineKpis();
+                renderPortfolioChart();
                 $("statusPill").textContent = `Loaded ${state.results.length} saved year(s)`;
             }
             $("btnExport").addEventListener("click", exportPlan);
@@ -3382,6 +3743,7 @@
             state.results = incoming.results || [];
             state.contributionChanges = normaliseContributionChanges(incoming.contributionChanges || state.contributionChanges);
             state.spendingPlan = normaliseSpendingPlan(incoming.spendingPlan || state.spendingPlan);
+            state.ui = normaliseUiState(incoming.ui || state.ui);
 
             saveState();
 
@@ -3390,6 +3752,9 @@
             applySavedInputs();
             renderAssetTables();
             renderResults();
+            renderHeadlineKpis();
+            renderChartCards();
+            renderPortfolioChart();
             updateDerivedPills();
 
             $("statusPill").textContent = "Imported settings";
@@ -3408,7 +3773,7 @@
             reader.readAsText(file);
         }
 
-
+         
     </script>
 </body>
 </html>
