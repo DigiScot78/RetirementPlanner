@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Retirement Planner</title> 
-    <style> 
+    <title>Retirement Planner</title>
+    <style>
         :root {
             --bg: #0b0f14;
             --panel: #121823;
@@ -1459,8 +1459,8 @@
                                 <div class="note" id="cashEventStatus" style="margin-top:0; margin-bottom:8px;"></div>
                                 <div class="row" style="margin-bottom:8px;">
                                     <div class="pill">One-off cash events</div>
-                                    <div class="muted" style="font-size:12px;">Single inflows or spends at a chosen age. All one-off events flow through a single tax-free cash pool used before normal withdrawals.</div>
                                     <div class="muted"><button class="btn small" id="addCashEvent">+ Add Cash Event</button></div>
+                                    <div class="muted" style="font-size:12px;">Single inflows or spends at a chosen age. All one-off events flow through a single tax-free cash pool used before normal withdrawals.</div>
                                 </div>
                                 <table id="cashEventTable">
                                     <thead>
@@ -1468,7 +1468,7 @@
                                             <th>Name</th>
                                             <th class="right">Amount (+/-)</th>
                                             <th class="right">Age</th>
-                                                                                        <th class="t-actions"></th>
+                                            <th class="t-actions"></th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -2027,17 +2027,17 @@
         function assetRowHTML(asset, idx, type) {
             const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             return `
-                        <tr data-type="${type}" data-idx="${idx}">
-                          <td contenteditable="true" data-field="name">${esc(asset.name)}</td>
-                          <td class="right" contenteditable="true" data-field="value">${fmt0.format(Number(asset.value) || 0)}</td>
-                          <td class="right" contenteditable="true" data-field="monthly">${fmt0.format(Number(asset.monthly) || 0)}</td>
-                          <td class="right" contenteditable="true" data-field="addGrowth">${fmt2.format(Number(asset.addGrowth) || 0)}</td>
-                          <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(asset.growth) || 0)}</td>
-                          <td class="t-actions">
-                            <button class="btn small danger" data-action="del">Del</button>
-                          </td>
-                        </tr>
-                      `;
+                            <tr data-type="${type}" data-idx="${idx}">
+                              <td contenteditable="true" data-field="name">${esc(asset.name)}</td>
+                              <td class="right" contenteditable="true" data-field="value">${fmt0.format(Number(asset.value) || 0)}</td>
+                              <td class="right" contenteditable="true" data-field="monthly">${fmt0.format(Number(asset.monthly) || 0)}</td>
+                              <td class="right" contenteditable="true" data-field="addGrowth">${fmt2.format(Number(asset.addGrowth) || 0)}</td>
+                              <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(asset.growth) || 0)}</td>
+                              <td class="t-actions">
+                                <button class="btn small danger" data-action="del">Del</button>
+                              </td>
+                            </tr>
+                          `;
         }
 
         function updateContributionAllowanceSummary() {
@@ -2122,16 +2122,16 @@
             if (!body) return;
             state.otherIncome = normaliseOtherIncome(state.otherIncome);
             body.innerHTML = state.otherIncome.map((item, idx) => `
-                    <tr data-type="otherIncome" data-idx="${idx}">
-                        <td contenteditable="true" data-field="name">${escapeAttr(item.name)}</td>
-                        <td class="right" contenteditable="true" data-field="monthly">${fmt2.format(Number(item.monthly) || 0)}</td>
-                        <td class="right" contenteditable="true" data-field="startAge">${fmt0.format(Number(item.startAge) || 0)}</td>
-                        <td class="right" contenteditable="true" data-field="endAge">${fmt0.format(Number(item.endAge) || 110)}</td>
-                        <td class="right" data-field="taxable"><span class="toggle-pill ${item.taxable ? "on" : ""}" data-income-action="toggle-taxable" data-idx="${idx}">${item.taxable ? "Yes" : "No"}</span></td>
-                        <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(item.growth) || 0)}</td>
-                        <td class="t-actions"><button class="btn small danger" data-income-action="del" data-idx="${idx}">Del</button></td>
-                    </tr>
-                `).join("");
+                        <tr data-type="otherIncome" data-idx="${idx}">
+                            <td contenteditable="true" data-field="name">${escapeAttr(item.name)}</td>
+                            <td class="right" contenteditable="true" data-field="monthly">${fmt2.format(Number(item.monthly) || 0)}</td>
+                            <td class="right" contenteditable="true" data-field="startAge">${fmt0.format(Number(item.startAge) || 0)}</td>
+                            <td class="right" contenteditable="true" data-field="endAge">${fmt0.format(Number(item.endAge) || 110)}</td>
+                            <td class="right" data-field="taxable"><span class="toggle-pill ${item.taxable ? "on" : ""}" data-income-action="toggle-taxable" data-idx="${idx}">${item.taxable ? "Yes" : "No"}</span></td>
+                            <td class="right" contenteditable="true" data-field="growth">${fmt2.format(Number(item.growth) || 0)}</td>
+                            <td class="t-actions"><button class="btn small danger" data-income-action="del" data-idx="${idx}">Del</button></td>
+                        </tr>
+                    `).join("");
         }
 
         function attachOtherIncomeHandlers() {
@@ -2213,13 +2213,13 @@
             if (!body) return;
             state.oneOffCashEvents = normaliseOneOffCashEvents(state.oneOffCashEvents);
             body.innerHTML = state.oneOffCashEvents.map((item, idx) => `
-                    <tr data-type="cashEvent" data-idx="${idx}">
-                        <td contenteditable="true" data-field="name">${escapeAttr(item.name)}</td>
-                        <td class="right" contenteditable="true" data-field="amount">${fmt2.format(Number(item.amount) || 0)}</td>
-                        <td class="right" contenteditable="true" data-field="age">${fmt0.format(Number(item.age) || 0)}</td>
-                        <td class="t-actions"><button class="btn small danger" data-event-action="del" data-idx="${idx}">Del</button></td>
-                    </tr>
-                `).join("");
+                        <tr data-type="cashEvent" data-idx="${idx}">
+                            <td contenteditable="true" data-field="name">${escapeAttr(item.name)}</td>
+                            <td class="right" contenteditable="true" data-field="amount">${fmt2.format(Number(item.amount) || 0)}</td>
+                            <td class="right" contenteditable="true" data-field="age">${fmt0.format(Number(item.age) || 0)}</td>
+                            <td class="t-actions"><button class="btn small danger" data-event-action="del" data-idx="${idx}">Del</button></td>
+                        </tr>
+                    `).join("");
         }
 
         function attachCashEventHandlers() {
@@ -2624,25 +2624,25 @@
             summary.textContent = `${money0(totalStart)} → ${money0(totalEnd)} from ${startLabel} to ${endLabel}`;
 
             const svg = `
-                    <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Portfolio chart showing total portfolio, pensions and ISAs over time">
-                        <rect x="0" y="0" width="${w}" height="${h}" fill="transparent"></rect>
-                        ${yTicks.map(value => `
-                            <g>
-                                <line x1="${pad.left}" y1="${yScale(value)}" x2="${w - pad.right}" y2="${yScale(value)}" stroke="var(--border)" stroke-width="1"></line>
-                                <text x="${pad.left - 10}" y="${yScale(value) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${money0(value)}</text>
-                            </g>
-                        `).join("")}
-                        ${xTicks.map(age => `
-                            <g>
-                                <line x1="${xScale(age)}" y1="${pad.top}" x2="${xScale(age)}" y2="${h - pad.bottom}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 5"></line>
-                                <text x="${xScale(age)}" y="${h - 12}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">${Number.isInteger(age) ? age : age.toFixed(1)}</text>
-                            </g>
-                        `).join("")}
-                        <path d="${buildLinePath(series.total, xScale, yScale)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>
-                        <path d="${buildLinePath(series.pension, xScale, yScale)}" fill="none" stroke="var(--good)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
-                        <path d="${buildLinePath(series.isa, xScale, yScale)}" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
-                    </svg>
-                `;
+                        <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Portfolio chart showing total portfolio, pensions and ISAs over time">
+                            <rect x="0" y="0" width="${w}" height="${h}" fill="transparent"></rect>
+                            ${yTicks.map(value => `
+                                <g>
+                                    <line x1="${pad.left}" y1="${yScale(value)}" x2="${w - pad.right}" y2="${yScale(value)}" stroke="var(--border)" stroke-width="1"></line>
+                                    <text x="${pad.left - 10}" y="${yScale(value) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${money0(value)}</text>
+                                </g>
+                            `).join("")}
+                            ${xTicks.map(age => `
+                                <g>
+                                    <line x1="${xScale(age)}" y1="${pad.top}" x2="${xScale(age)}" y2="${h - pad.bottom}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 5"></line>
+                                    <text x="${xScale(age)}" y="${h - 12}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">${Number.isInteger(age) ? age : age.toFixed(1)}</text>
+                                </g>
+                            `).join("")}
+                            <path d="${buildLinePath(series.total, xScale, yScale)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>
+                            <path d="${buildLinePath(series.pension, xScale, yScale)}" fill="none" stroke="var(--good)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+                            <path d="${buildLinePath(series.isa, xScale, yScale)}" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+                        </svg>
+                    `;
 
             frame.innerHTML = svg;
         }
@@ -3266,11 +3266,11 @@
                     const dtr = document.createElement("tr");
                     dtr.className = "decade-row";
                     dtr.innerHTML = `
-                                <td colspan="13" class="decade-cell">
-                                  <span class="decade-toggle" data-decade="${decade}">▼</span>
-                                  Ages ${decade}–${decade + 9}
-                                </td>
-                              `;
+                                    <td colspan="13" class="decade-cell">
+                                      <span class="decade-toggle" data-decade="${decade}">▼</span>
+                                      Ages ${decade}–${decade + 9}
+                                    </td>
+                                  `;
                     tb.appendChild(dtr);
                 }
 
@@ -3321,22 +3321,22 @@
                     : (derivedYearDate ? String(derivedYearDate.getFullYear()) : (r.periodYearLabel || "—"));
 
                 tr.innerHTML = `
-                          <td class="mono">${ageText}</td>
-                          <td class="mono">${yearText}</td>
-                          <td class="right">${money0(r.pensionTotal)}</td>
-                          <td class="right">${money0(r.isaTotal)}</td>
-                          <td class="right">${money0(r.stateIncome)}</td>
-                          <td class="right">${money0(r.otherIncome || 0)}</td>
-                          <td class="right">${money0(r.oneOffEventAmount || 0)}</td>
-                          <td class="right">${money0(r.cashPoolEnd || 0)}</td>
-                          <td class="right">${money0(r.netSpendTarget)}</td>
-                          <td class="right">${money0(r.takenPensionGross)}</td>
-                          <td class="right">${money0(r.takenIsa)}</td>
-                          <td class="right">${money0(r.taxPaid)}</td>
-                          <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
-                          <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
-                          <td class="right">${money0(r.pclsRemainingEnd || 0)}</td>
-                        `;
+                              <td class="mono">${ageText}</td>
+                              <td class="mono">${yearText}</td>
+                              <td class="right">${money0(r.pensionTotal)}</td>
+                              <td class="right">${money0(r.isaTotal)}</td>
+                              <td class="right">${money0(r.stateIncome)}</td>
+                              <td class="right">${money0(r.otherIncome || 0)}</td>
+                              <td class="right">${money0(r.oneOffEventAmount || 0)}</td>
+                              <td class="right">${money0(r.cashPoolEnd || 0)}</td>
+                              <td class="right">${money0(r.netSpendTarget)}</td>
+                              <td class="right">${money0(r.takenPensionGross)}</td>
+                              <td class="right">${money0(r.takenIsa)}</td>
+                              <td class="right">${money0(r.taxPaid)}</td>
+                              <td class="right"><span class="net-pill">${money0(r.netDelivered)}</span></td>
+                              <td class="right">${money0(r.pclsUsedThisYear || 0)}</td>
+                              <td class="right">${money0(r.pclsRemainingEnd || 0)}</td>
+                            `;
 
                 prevIsaTotal = (r.isaTotal || 0);
                 prevPclsLeft = (r.pclsRemainingEnd || 0);
@@ -3545,30 +3545,30 @@
 
             wrap.innerHTML = state.spendingPlan.map((section, sectionIdx) => {
                 const itemsHtml = section.items.map((item, itemIdx) => `
-                        <div class="plan-item">
-                            <input type="text" value="${escapeAttr(item.name)}" data-plan-field="item-name" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}" placeholder="Item name" />
-                            <input type="number" min="0" step="0.01" value="${Number(item.cost) || 0}" data-plan-field="item-cost" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}" placeholder="Monthly cost" />
-                            <button type="button" class="btn small danger" data-plan-action="delete-item" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}">Delete</button>
-                        </div>
-                    `).join("");
+                            <div class="plan-item">
+                                <input type="text" value="${escapeAttr(item.name)}" data-plan-field="item-name" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}" placeholder="Item name" />
+                                <input type="number" min="0" step="0.01" value="${Number(item.cost) || 0}" data-plan-field="item-cost" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}" placeholder="Monthly cost" />
+                                <button type="button" class="btn small danger" data-plan-action="delete-item" data-section-idx="${sectionIdx}" data-item-idx="${itemIdx}">Delete</button>
+                            </div>
+                        `).join("");
 
                 return `
-                        <div class="plan-section" data-section-idx="${sectionIdx}">
-                            <div class="plan-section-head">
-                                <div class="plan-section-title">
-                                    <span class="drag-handle" title="Drag to reorder" draggable="true" data-drag-handle="true" data-section-idx="${sectionIdx}">⋮⋮</span>
-                                    <input type="text" value="${escapeAttr(section.name)}" data-plan-field="section-name" data-section-idx="${sectionIdx}" placeholder="Section name" />
+                            <div class="plan-section" data-section-idx="${sectionIdx}">
+                                <div class="plan-section-head">
+                                    <div class="plan-section-title">
+                                        <span class="drag-handle" title="Drag to reorder" draggable="true" data-drag-handle="true" data-section-idx="${sectionIdx}">⋮⋮</span>
+                                        <input type="text" value="${escapeAttr(section.name)}" data-plan-field="section-name" data-section-idx="${sectionIdx}" placeholder="Section name" />
+                                    </div>
+                                    <div class="row" style="justify-content:flex-end;">
+                                        <button type="button" class="btn small" data-plan-action="add-item" data-section-idx="${sectionIdx}">+ Add Item</button>
+                                        <button type="button" class="btn small danger" data-plan-action="delete-section" data-section-idx="${sectionIdx}">Delete Section</button>
+                                    </div>
                                 </div>
-                                <div class="row" style="justify-content:flex-end;">
-                                    <button type="button" class="btn small" data-plan-action="add-item" data-section-idx="${sectionIdx}">+ Add Item</button>
-                                    <button type="button" class="btn small danger" data-plan-action="delete-section" data-section-idx="${sectionIdx}">Delete Section</button>
+                                <div class="plan-section-body">
+                                    <div class="plan-items">${itemsHtml}</div>
                                 </div>
                             </div>
-                            <div class="plan-section-body">
-                                <div class="plan-items">${itemsHtml}</div>
-                            </div>
-                        </div>
-                    `;
+                        `;
             }).join("");
 
             const monthly = monthlySpendingTotal();
@@ -3619,58 +3619,58 @@
             wrap.innerHTML = state.contributionChanges.map((change, idx) => {
                 const assetOptions = change.targetType === "isa" ? isaOptions : pensionOptions;
                 return `
-                        <div class="contrib-rule" data-change-id="${escapeAttr(change.id)}">
-                            <div class="contrib-rule-head">
-                                <div class="contrib-rule-title">Change ${idx + 1}</div>
-                                <button type="button" class="btn small danger" data-change-action="delete" data-change-id="${escapeAttr(change.id)}">Delete</button>
+                            <div class="contrib-rule" data-change-id="${escapeAttr(change.id)}">
+                                <div class="contrib-rule-head">
+                                    <div class="contrib-rule-title">Change ${idx + 1}</div>
+                                    <button type="button" class="btn small danger" data-change-action="delete" data-change-id="${escapeAttr(change.id)}">Delete</button>
+                                </div>
+                                <div class="contrib-rule-grid">
+                                    <label>
+                                        Type
+                                        <select data-change-field="targetType" data-change-id="${escapeAttr(change.id)}">
+                                            <option value="pension" ${change.targetType === "pension" ? "selected" : ""}>Pension</option>
+                                            <option value="isa" ${change.targetType === "isa" ? "selected" : ""}>ISA</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Apply to
+                                        <select data-change-field="targetMode" data-change-id="${escapeAttr(change.id)}">
+                                            <option value="all" ${change.targetMode === "all" ? "selected" : ""}>All ${change.targetType === "isa" ? "ISAs" : "pensions"}</option>
+                                            <option value="asset" ${change.targetMode === "asset" ? "selected" : ""}>Specific ${change.targetType === "isa" ? "ISA" : "pension"}</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Age to apply
+                                        <input type="number" min="0" max="110" step="1" value="${Number(change.age) || 0}" data-change-field="age" data-change-id="${escapeAttr(change.id)}" />
+                                    </label>
+                                    <label ${change.targetMode === "asset" ? "" : 'style="display:none;"'}>
+                                        Asset
+                                        <select data-change-field="targetId" data-change-id="${escapeAttr(change.id)}">
+                                            ${assetOptions}
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Change style
+                                        <select data-change-field="changeType" data-change-id="${escapeAttr(change.id)}">
+                                            <option value="delta" ${change.changeType === "delta" ? "selected" : ""}>Adjust monthly by amount</option>
+                                            <option value="set" ${change.changeType === "set" ? "selected" : ""}>Set monthly to amount</option>
+                                            <option value="pct" ${change.changeType === "pct" ? "selected" : ""}>Change monthly by %</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Value
+                                        <input type="number" step="0.01" value="${Number(change.value) || 0}" data-change-field="value" data-change-id="${escapeAttr(change.id)}" />
+                                    </label>
+                                </div>
+                                <div class="note" style="margin-top:8px; margin-bottom:8px;">
+                                    <b>${change.changeType === "delta" ? "Adjust monthly by amount" : change.changeType === "set" ? "Set monthly to amount" : "Change monthly by %"}</b> applies from age ${Number(change.age) || 0} onward, not as a one-off payment.
+                                </div>
+                                <label>
+                                    Note
+                                    <input type="text" value="${escapeAttr(change.note)}" data-change-field="note" data-change-id="${escapeAttr(change.id)}" placeholder="Optional note (for example: mortgage ends)" />
+                                </label>
                             </div>
-                            <div class="contrib-rule-grid">
-                                <label>
-                                    Type
-                                    <select data-change-field="targetType" data-change-id="${escapeAttr(change.id)}">
-                                        <option value="pension" ${change.targetType === "pension" ? "selected" : ""}>Pension</option>
-                                        <option value="isa" ${change.targetType === "isa" ? "selected" : ""}>ISA</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Apply to
-                                    <select data-change-field="targetMode" data-change-id="${escapeAttr(change.id)}">
-                                        <option value="all" ${change.targetMode === "all" ? "selected" : ""}>All ${change.targetType === "isa" ? "ISAs" : "pensions"}</option>
-                                        <option value="asset" ${change.targetMode === "asset" ? "selected" : ""}>Specific ${change.targetType === "isa" ? "ISA" : "pension"}</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Age to apply
-                                    <input type="number" min="0" max="110" step="1" value="${Number(change.age) || 0}" data-change-field="age" data-change-id="${escapeAttr(change.id)}" />
-                                </label>
-                                <label ${change.targetMode === "asset" ? "" : 'style="display:none;"'}>
-                                    Asset
-                                    <select data-change-field="targetId" data-change-id="${escapeAttr(change.id)}">
-                                        ${assetOptions}
-                                    </select>
-                                </label>
-                                <label>
-                                    Change style
-                                    <select data-change-field="changeType" data-change-id="${escapeAttr(change.id)}">
-                                        <option value="delta" ${change.changeType === "delta" ? "selected" : ""}>Adjust monthly by amount</option>
-                                        <option value="set" ${change.changeType === "set" ? "selected" : ""}>Set monthly to amount</option>
-                                        <option value="pct" ${change.changeType === "pct" ? "selected" : ""}>Change monthly by %</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Value
-                                    <input type="number" step="0.01" value="${Number(change.value) || 0}" data-change-field="value" data-change-id="${escapeAttr(change.id)}" />
-                                </label>
-                            </div>
-                            <div class="note" style="margin-top:8px; margin-bottom:8px;">
-                                <b>${change.changeType === "delta" ? "Adjust monthly by amount" : change.changeType === "set" ? "Set monthly to amount" : "Change monthly by %"}</b> applies from age ${Number(change.age) || 0} onward, not as a one-off payment.
-                            </div>
-                            <label>
-                                Note
-                                <input type="text" value="${escapeAttr(change.note)}" data-change-field="note" data-change-id="${escapeAttr(change.id)}" placeholder="Optional note (for example: mortgage ends)" />
-                            </label>
-                        </div>
-                    `;
+                        `;
             }).join("");
 
             for (const change of state.contributionChanges) {
